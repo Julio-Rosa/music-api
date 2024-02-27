@@ -15,7 +15,7 @@ db.music = require("./musicModel")(sequelize, Sequelize);
 db.album = require("./albumModel")(sequelize, Sequelize);
 db.artist = require("./artistModel")(sequelize, Sequelize);
 db.category = require("./categoryModel")(sequelize, Sequelize);
-
+db.user = require("./userModel")(sequelize, Sequelize);
 db.music.belongsTo(db.album, { foreignKey: 'album_id' });
 db.music.belongsTo(db.category, { foreignKey: 'category_id' });
 db.music.belongsTo(db.artist, { foreignKey: 'artist_id' });
