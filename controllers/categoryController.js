@@ -1,7 +1,7 @@
 const { Sequelize, DataTypes, Model } = require('sequelize');
-const { Category } = require('../models/model');
 const crypto = require('crypto');
-
+const db = require("../models/model");
+const Category = db.category;
 async function insertCategoryData(name) {
 
     const category = await Category.findAll({

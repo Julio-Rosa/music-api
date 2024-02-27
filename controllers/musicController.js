@@ -1,8 +1,8 @@
 const { Sequelize, DataTypes, Model } = require('sequelize');
-const { Music } = require('../models/model');
+const db = require("../models/model");
 const crypto = require('crypto');
 const { sendErrors } = require('../utils/errorsUtil');
-
+const Music = db.music;
 
 //------------------------- INSERT NEW MUSIC -----------------------------
 async function insertMusicData(release_date, name, album_id, artist_id, category_id) {

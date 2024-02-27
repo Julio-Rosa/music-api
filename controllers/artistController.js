@@ -1,6 +1,7 @@
 const { Sequelize, DataTypes, Model } = require('sequelize');
-const { Artist } = require('../models/model');
 const crypto = require('crypto');
+const db = require("../models/model");
+const Artist = db.artist;
 
 
 async function insertArtistData(name,image_url) {
