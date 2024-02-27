@@ -1,90 +1,25 @@
 const { Sequelize, DataTypes } = require('sequelize');
-const sequelize = new Sequelize('course_db',  'root', 'password', {
+const sequelize = new Sequelize("music_db_development", "root", "password", {
+
     host: "localhost",
-    dialect: 'mysql'
+    dialect: "mysql",
+    port: "3306"
+
 });
+const db = {};
+db.Sequelize = Sequelize;
+db.sequelize = sequelize;
+db.music = require("./musicModel")(sequelize, Sequelize);
+db.album = require("./albumModel")(sequelize, Sequelize);
+db.artist = require("./artistModel")(sequelize, Sequelize);
+db.category = require("./categoryModel")(sequelize, Sequelize);
 
+db.music.belongsTo(db.album, { foreignKey: 'album_id' });
+db.music.belongsTo(db.category, { foreignKey: 'category_id' });
+db.music.belongsTo(db.artist, { foreignKey: 'artist_id' });
+db.album.belongsTo(db.artist, { foreignKey: 'artist_id' });
 
-
-
-
-///MODELS//////////////////////
-
-
-
-const Music = sequelize.define('music', {
-    music_id: {
-        type: DataTypes.STRING,
-        primaryKey: true,
-       
-    },
-    release_date:{
-        type: Sequelize.DataTypes.STRING,
-        allowNull: false
-    },
-    name: {
-        type: Sequelize.DataTypes.STRING,
-        allowNull: false
-    },
-   
-});
-const Album = sequelize.define('album', {
-    album_id: {
-        type: DataTypes.STRING,
-        primaryKey: true, 
-       
-    },
-    name: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
-    image_url:{
-        type: DataTypes.STRING
-    }
-});
-
-Music.belongsTo(Album,{foreignKey: 'album_id'});
-
-const Category = sequelize.define('category',{
-    category_id:{
-        type: DataTypes.STRING,
-        primaryKey: true,
-       
-    },
-    name: { 
-        type:DataTypes.STRING,
-        unique: true
-    }
-});
-
-Music.belongsTo(Category, {foreignKey: 'category_id'});
-
-const Artist = sequelize.define('artist', {
-    artist_id: {
-        type: DataTypes.STRING,
-        primaryKey: true,
-        
-    },
-    name: {
-        type: DataTypes.STRING,
-        allowNull: true
-    },
-    image_url:{
-        type: DataTypes.STRING
-    }
-});
-Music.belongsTo(Artist,{foreignKey: 'artist_id'});
-Album.belongsTo(Artist,{foreignKey:'artist_id'});
-
-
-
-
- 
-//  sequelize.sync ({force:true}).then(() => {
-//     console.log("Models Synchronized");
-//  }).catch(err => {
-//     console.error("Unable to sync:", err);
-//  })
+module.exports = db;
 
 
 
@@ -92,10 +27,8 @@ Album.belongsTo(Artist,{foreignKey:'artist_id'});
 
 
 
-module.exports = {
-   Music,
-   Album,
-   Artist,
-   Category
-    
-}
+
+
+
+
+
