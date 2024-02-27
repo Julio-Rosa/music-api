@@ -1,5 +1,6 @@
 const express = require("express");
 const routes = express.Router();
+const { insertCategoryData, findAllCategories, deleteCategorieById, findCategoryById, updateCategoryById } = require('../controllers/categoryController');
 const { insertAlbumData, findAllAlbums, findAlbumById, deleteAlbumById, updateAlbumById } = require('../controllers/albumController');
 const { insertMusicData, findAllMusics, findAllMusicsByCategoryId, findAllMusicsByArtistId, findAllMusicsByAlbumId, deleteMusicBydId, updateMusicById, findById} = require('../controllers/musicController');
 const { insertArtistData, findAllArtists, findArtistById, deleteArtistById, updateArtistById } = require('../controllers/artistController');
@@ -203,6 +204,69 @@ routes.put('/artist/update/:artistId', async (req, res) =>{
     }else{
         res.status(500).send(JSON.stringify({"message":"Error when updating artist!"}));
     }
+});
+
+//-------------------------- CATEGORY ENDPOINT ---------------------------------------------
+routes.post('/category/new', async (req, res) => {
+    const { name } = req.body;
+    const category = await insertCategoryData(name);
+    if (category == 1) {
+        res.status(400).send(JSON.stringify({ "message": "A category with this name already exists" }));
+    } else if (category) {
+        res.status(201).send(JSON.stringify(category));
+    } else {
+        res.status(500).send(JSON.stringify({ "message": "Error when creating a new category" }));
+    }
+});
+routes.get('/category/all', async (req, res) => {
+    const categories = await findAllCategories();
+    if (categories) {
+        res.status(200).send(categories);
+    } else if (categories == 0) {
+        res.status(404).send({ "message": "No categories found" });
+    } else {
+        res.status(500).send({ "message": "Error when listing categories" });
+    }
+
+});
+routes.get('/category/:categoryId', async (req, res) => {
+    const category = await findCategoryById(req.params.categoryId);
+
+    if (category == null) {
+        res.status(404).send(JSON.stringify({ "message": "Category Not Found" }));
+    } else if (category) {
+        res.status(200).send(JSON.stringify(category));
+    } else {
+        res.status(500).send(JSON.stringify({ "message": "An error occurred while finding" }));
+    }
+});
+routes.delete('/category/delete/:categoryId', async (req, res) => {
+    const deleted = await deleteCategorieById(req.params.categoryId);
+    if (deleted === null) {
+
+        res.status(404).send(JSON.stringify({ "message": "Category Not Found" }));
+    } else {
+        if (deleted == true) {
+            res.status(200).send(JSON.stringify({ "message": "Category Deleted" }));
+        } else {
+            res.status(500).send(JSON.stringify({ "message": "An error occurred while deleting" }));
+        }
+    }
+
+});
+routes.put('/category/update/:categoryId', async (req, res) => {
+    const { name } = req.body;
+    const category = await updateCategoryById(req.params.categoryId, name);
+    if (category == 1) {
+        res.status(400).send(JSON.stringify({ "message": "A category with this name already exists" }));
+    } else if (category) {
+        res.status(200).send(JSON.stringify(category));
+    } else if (category == null) {
+        res.status(404).send(JSON.stringify({ "message": "Category Not Found" }));
+    } else {
+        res.status(500).send(JSON.stringify({ "message": "Error when creating a new category" }));
+    }
+
 });
 
 
