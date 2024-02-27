@@ -3,6 +3,8 @@ const express = require("express");
 const routes = require('./routes/routes');
 const app = express();
 const db = require("./models/model");
+require('dotenv/config');
+
 
 // db.sequelize.sync ({force:true}).then(() => {
 //     console.log("Models Synchronized");

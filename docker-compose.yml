@@ -4,14 +4,16 @@ services:
   db:
     image: mysql:5.7
     restart: always
+    env_file: .env
     environment:
-      MYSQL_DATABASE: music_db_development
-      MYSQL_PASSWORD: password
-      MYSQL_ROOT_PASSWORD: password
+      MYSQL_USER: $DB_USER
+      MYSQL_DATABASE: $DATABASE
+      MYSQL_PASSWORD: $PASSWORD
+      MYSQL_ROOT_PASSWORD: $PASSWORD
     ports:
-      -   '3306:3306'
+      -   $PORT:$PORT
     expose: 
-      - '3306'
+      - $PORT
     volumes: 
       - my-db:/var/lib/mysql
 volumes:

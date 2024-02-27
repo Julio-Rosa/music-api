@@ -1,9 +1,11 @@
 const { Sequelize, DataTypes } = require('sequelize');
-const sequelize = new Sequelize("music_db_development", "root", "password", {
+require('dotenv/config');
 
-    host: "localhost",
-    dialect: "mysql",
-    port: "3306"
+const sequelize = new Sequelize(process.env.DATABASE, process.env.DB_USER, process.env.PASSWORD, {
+
+    host: process.env.HOST,
+    dialect: 'mysql',
+    port: process.env.port
 
 });
 const db = {};
