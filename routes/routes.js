@@ -6,6 +6,7 @@ const { insertCategoryData, findAllCategories, deleteCategorieById, findCategory
 const { insertAlbumData, findAllAlbums, findAlbumById, deleteAlbumById, updateAlbumById } = require('../controllers/albumController');
 const { insertMusicData, findAllMusics, findAllMusicsByCategoryId, findAllMusicsByArtistId, findAllMusicsByAlbumId, deleteMusicBydId, updateMusicById, findById} = require('../controllers/musicController');
 const { insertArtistData, findAllArtists, findArtistById, deleteArtistById, updateArtistById } = require('../controllers/artistController');
+const {insertNewUser} = require('../controllers/userController');
 routes.use(express.json());
 
 
@@ -270,5 +271,21 @@ routes.put('/category/update/:categoryId', async (req, res) => {
 
 });
 
+
+routes.post('/user/new', async (req, res) =>{
+    const {name, email, password} = req.body;
+
+    const user  = await insertNewUser(name, email,password);
+
+    if(user == 1){
+        res.status(400).send(JSON.stringify({"message":"User alread exists!"}));
+    }else if(user){
+        res.status(201).send(JSON.stringify(user));
+    }else{
+        res.status(500).send(JSON.stringify({"message":"Error when cresating a new user!"}));
+    }
+    
+
+});
 
 module.exports = routes;

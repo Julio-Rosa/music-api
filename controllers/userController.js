@@ -5,16 +5,29 @@ const User = db.user;
 
 async function insertNewUser(name,email,password){
 
-    try {
-        const user = await User.create({
-            user_id: crypto.randomUUID(),
-            name: name,
-            email: email,
-            password:password
-        });
-        return user;
-    } catch (error) {
-        console.error(`Error when creating a new user`, error);
+    const user = await User.findAll({where:{
+        email:email
+    }});
+    if(user.length > 0){
+        return 1;
+    }else{
+        try {
+            const user = await User.create({
+                user_id: crypto.randomUUID(),
+                name: name,
+                email: email,
+                password:password
+            });
+            return user;
+        } catch (error) {
+            console.error(`Error when creating a new user`, error);
+        }
+
     }
 
+   
+
 };
+ module.exports = {
+    insertNewUser
+ }
