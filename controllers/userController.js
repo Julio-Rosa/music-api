@@ -15,7 +15,7 @@ async function insertNewUser(name, email, password) {
         return 1;
 
     } else {
-        const options = { name };
+        const options = { name,password,email };
         const errors = await returnErrors(options);
         if (errors == false) {
             try {
