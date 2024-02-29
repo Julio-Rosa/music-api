@@ -1,19 +1,21 @@
 const { Sequelize, DataTypes, Model } = require('sequelize');
 const db = require("../models/model");
 const crypto = require('crypto');
-const { sendErrors } = require('../utils/errorsUtil');
+const { returnErrors } = require('../utils/errorsUtil');
 const Music = db.music;
 
 //------------------------- INSERT NEW MUSIC -----------------------------
-async function insertMusicData(release_date, name, album_id, artist_id, category_id) {
+async function insertMusicData(name,release_date, album_id, artist_id, category_id) {
+    const options = {release_date};
+    const errors = await returnErrors(options);
+    if(errors != false){
+        return errors;
+    }else{
+        try {
+       
+        
 
-    try {
-        const errors = await sendErrors(release_date);
-
-        if (Object.keys(errors).length > 0) {
-            return errors;
-
-        } else {
+       
             const music = await Music.create({
                 music_id: crypto.randomUUID(),
                 release_date: release_date,
@@ -23,7 +25,7 @@ async function insertMusicData(release_date, name, album_id, artist_id, category
                 category_id: category_id
             });
             return music;
-        }
+        
 
 
 
@@ -31,6 +33,10 @@ async function insertMusicData(release_date, name, album_id, artist_id, category
     } catch (error) {
         console.error(`Error whren creating a new music!`, error);
     }
+    }
+   
+
+  
 };
 
 //------------------------ FIND ALL MUSICS -----------------------------

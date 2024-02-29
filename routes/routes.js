@@ -1,28 +1,29 @@
 const express = require("express");
 const db = require("../models/model");
 const Music = db.music;
+const User = db.user;
 const routes = express.Router();
 const { insertCategoryData, findAllCategories, deleteCategorieById, findCategoryById, updateCategoryById } = require('../controllers/categoryController');
 const { insertAlbumData, findAllAlbums, findAlbumById, deleteAlbumById, updateAlbumById } = require('../controllers/albumController');
-const { insertMusicData, findAllMusics, findAllMusicsByCategoryId, findAllMusicsByArtistId, findAllMusicsByAlbumId, deleteMusicBydId, updateMusicById, findById} = require('../controllers/musicController');
+const { insertMusicData, findAllMusics, findAllMusicsByCategoryId, findAllMusicsByArtistId, findAllMusicsByAlbumId, deleteMusicBydId, updateMusicById, findById } = require('../controllers/musicController');
 const { insertArtistData, findAllArtists, findArtistById, deleteArtistById, updateArtistById } = require('../controllers/artistController');
-const {insertNewUser} = require('../controllers/userController');
+const { insertNewUser } = require('../controllers/userController');
 routes.use(express.json());
 
 
 //------------------- MUSIC ENDPOINTS--------------------------------------
 routes.post('/music/new', async (req, res) => {
-    const { release_date, name, album_id, artist_id, category_id } = req.body;
-    const music = await insertMusicData(release_date, name, album_id, artist_id, category_id);
-    if(!(music instanceof Music)){
-    
-        res.status(400).send(JSON.stringify({"errors":music}));
-    }else if(music){
+    const { name, release_date, album_id, artist_id, category_id } = req.body;
+    const music = await insertMusicData(name, release_date, album_id, artist_id, category_id);
+    if (!(music instanceof Music)) {
+
+        res.status(400).send(JSON.stringify({ "errors": music }));
+    } else if (music) {
         res.status(201).send(JSON.stringify(music));
-    }else{
-        res.status(500).send(JSON.stringify({"message":"Error when cresting a new music!"}));
+    } else {
+        res.status(500).send(JSON.stringify({ "message": "Error when cresting a new music!" }));
     }
-   
+
 });
 routes.get('/music/all', async (req, res) => {
     const musics = await findAllMusics();
@@ -104,8 +105,8 @@ routes.put('/music/update/:musicId', async (req, res) => {
 
 //----------------------------------ALBUM ENDPOINT------------------------------------------
 routes.post('/album/new', async (req, res) => {
-    const { name, image_url,artist_id } = req.body;
-    const album = await insertAlbumData(name,image_url, artist_id);
+    const { name, image_url, artist_id } = req.body;
+    const album = await insertAlbumData(name, image_url, artist_id);
     if (album) {
         res.status(201).send(JSON.stringify(album));
     } else {
@@ -147,8 +148,8 @@ routes.delete('/album/delete/:albumId', async (req, res) => {
     }
 });
 routes.put('/album/update/:albumId', async (req, res) => {
-    const { name, image_url,artist_id } = req.body;
-    const album = await updateAlbumById(req.params.albumId, name,image_url, artist_id);
+    const { name, image_url, artist_id } = req.body;
+    const album = await updateAlbumById(req.params.albumId, name, image_url, artist_id);
     if (album == 0 || album == false) {
         res.status(404).send(JSON.stringify({ "message": "Album Not Found" }));
     } else if (album) {
@@ -162,7 +163,7 @@ routes.put('/album/update/:albumId', async (req, res) => {
 
 routes.post('/artist/new', async (req, res) => {
     const { name, image_url } = req.body;
-    const artist = await insertArtistData(name,image_url);
+    const artist = await insertArtistData(name, image_url);
     res.status(201).send(artist);
 });
 routes.get('/artist/all', async (req, res) => {
@@ -177,34 +178,34 @@ routes.get('/artist/all', async (req, res) => {
 });
 routes.get('/artist/:artistId', async (req, res) => {
     const artist = await findArtistById(req.params.artistId);
-    if(artist == null){
+    if (artist == null) {
         res.status(404).send(JSON.stringify({ "message": "No artist found with this id!" }));
-    }else if(artist){
+    } else if (artist) {
         res.status(200).send(JSON.stringify(artist));
-    }else{
+    } else {
         res.status(500).send(JSON.stringify({ "message": "Error when listing  artist by id!" }));
     }
 });
-routes.delete('/artist/delete/:artistId', async (req, res)=>{
+routes.delete('/artist/delete/:artistId', async (req, res) => {
     const deleted = await deleteArtistById(req.params.artistId);
-    if(deleted == false){
+    if (deleted == false) {
         res.status(404).send(JSON.stringify({ "message": "No artist found with this id!" }));
-    }else if(deleted == true){
+    } else if (deleted == true) {
 
         res.status(200).send(JSON.stringify({ "message": "Deleted!" }));
-    }else{
+    } else {
         res.status(500).send(JSON.stringify({ "message": "Error when deleting  artist by id!" }));
     }
 });
-routes.put('/artist/update/:artistId', async (req, res) =>{
-    const {name, image_url} = req.body;
-    const artist = await updateArtistById(req.params.artistId,name, image_url);
-    if(artist == null){
-        res.status(404).send(JSON.stringify({"message":"Artist not found!"}));
-    }else if(artist){
+routes.put('/artist/update/:artistId', async (req, res) => {
+    const { name, image_url } = req.body;
+    const artist = await updateArtistById(req.params.artistId, name, image_url);
+    if (artist == null) {
+        res.status(404).send(JSON.stringify({ "message": "Artist not found!" }));
+    } else if (artist) {
         res.status(200).send(JSON.stringify(artist));
-    }else{
-        res.status(500).send(JSON.stringify({"message":"Error when updating artist!"}));
+    } else {
+        res.status(500).send(JSON.stringify({ "message": "Error when updating artist!" }));
     }
 });
 
@@ -272,19 +273,32 @@ routes.put('/category/update/:categoryId', async (req, res) => {
 });
 
 
-routes.post('/user/new', async (req, res) =>{
-    const {name, email, password} = req.body;
+routes.post('/user/new', async (req, res) => {
+    const { name, email, password } = req.body;
 
-    const user  = await insertNewUser(name, email,password);
+    const user = await insertNewUser(name, email, password);
 
-    if(user == 1){
-        res.status(400).send(JSON.stringify({"message":"User alread exists!"}));
-    }else if(user){
-        res.status(201).send(JSON.stringify(user));
-    }else{
-        res.status(500).send(JSON.stringify({"message":"Error when cresating a new user!"}));
-    }
+    if (user == 1) {
+        res.status(400).send(JSON.stringify({ "message": "User alread exists!" }));
+    } else {
+        if (!(user instanceof User)) {
+            res.status(400).send(JSON.stringify({ "errors": user }));
+        } else {
     
+            if (user) {
+                res.status(201).send(JSON.stringify(user));
+            } else {
+                res.status(500).send(JSON.stringify({ "message": "Error when cresating a new user!" }));
+            }
+    
+        }
+
+    }
+
+   
+
+
+
 
 });
 

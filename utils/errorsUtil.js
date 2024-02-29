@@ -2,31 +2,45 @@ const { isValidDate } = require('../utils/dateUtil');
 
 
 
-async function sendErrors(release_date = undefined,name = undefined) {
+async function sendErrors(options) {
+    
     let errors = [];
     let errorsObject = {};
-    if(release_date != undefined){
-        if (isValidDate(release_date) == false || release_date == null) {
-            errors.push("The date is not valid, the correct format is day/month/year");
-    
+
+
+
+    if(options && options.name !== undefined){
+        
+        if(options.name.length < 3){
+            errors.push("The name must have at least three characters");
+            
+        }
+
+    }
+    if(options && options.release_date !== undefined){
+        if(isValidDate(options.release_date) == false){
+            errors.push("Invalid date");
         }
     }
 
-    if(name != undefined){
-        if(name.length < 3){
-            errors.push("The name must have at least three characters");
-        }
-    }
-   
-    errors.forEach((error, index) => {
+    errors.forEach((error, index) =>{
         errorsObject[index] = error;
-      });
-     
-      
+    });
+
     return errorsObject;
+
+    
+}
+async function returnErrors(options){
+    const errors =  await sendErrors(options);
+
+    if(Object.keys(errors).length == 0){
+        return false;
+    }else{
+        return errors;
+    }
 }
 
-
 module.exports = {
-    sendErrors
+   returnErrors
 }
