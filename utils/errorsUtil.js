@@ -10,7 +10,6 @@ async function validateEmail(email) {
 
 
 }
-
 async function checkPassword(password) {
     const errors = [];
     const errorsObject = {};

@@ -7,7 +7,7 @@ const { insertCategoryData, findAllCategories, deleteCategorieById, findCategory
 const { insertAlbumData, findAllAlbums, findAlbumById, deleteAlbumById, updateAlbumById } = require('../controllers/albumController');
 const { insertMusicData, findAllMusics, findAllMusicsByCategoryId, findAllMusicsByArtistId, findAllMusicsByAlbumId, deleteMusicBydId, updateMusicById, findById } = require('../controllers/musicController');
 const { insertArtistData, findAllArtists, findArtistById, deleteArtistById, updateArtistById } = require('../controllers/artistController');
-const { insertNewUser } = require('../controllers/userController');
+const { insertNewUser, getUserByEmail, findAllUsers , deleteUserById, updateUserById} = require('../controllers/userController');
 routes.use(express.json());
 
 
@@ -300,6 +300,53 @@ routes.post('/user/new', async (req, res) => {
 
 
 
+});
+routes.get('/user/all', async (req, res) => {
+    const users = await findAllUsers();
+   
+    if(users == 0){
+        res.status(404).send(JSON.stringify({"message":"No users found!"}));
+    }else if(users){
+        res.status(200).send(JSON.stringify(users));
+    }else{
+        res.status(500).send(JSON.stringify({"message":"Error when finding all users"}));
+    }
+    
+});
+routes.get('/user/:userEmail', async (req, res) => {
+    const user = await getUserByEmail(req.params.userEmail);
+    if(user == 0){
+        res.status(404).send(JSON.stringify({"message":"User not found!"}));
+    }else if(user){
+        res.status(200).send(JSON.stringify(user));
+    }else{
+        res.status(500).send(JSON.stringify({"message":"Error when finding user by email!"}));
+    }
+});
+
+routes.delete('/user/delete/:userId', async (req, res)=>{
+    const user = await deleteUserById(req.params.userId);
+    if(user == null){
+        res.status(404).send(JSON.stringify({"message":"User not found!"}));
+    }else if( user){
+        res.status(200).send(JSON.stringify({"message":"Deleted!"}));
+    }else{
+        res.status(500).send(JSON.stringify({"message":"Error when deleting user!"}));
+    }
+});
+routes.put('/user/update/:userId', async(req, res) => {
+    const {name,email} = req.body;
+    const user = await updateUserById(req.params.userId,name,email);
+    if (user == 1) {
+        res.status(400).send(JSON.stringify({"message":"User with this email already exists!"}));
+        
+    } else if (!(user instanceof User)) {
+        res.status(400).send(JSON.stringify({ "errors": user }));
+    } else if (user){
+        res.status(200).send(JSON.stringify(user));
+    }else{
+        res.status(500).send(JSON.stringify({ "message": "Error when cresting a new music!" }));
+    }
 });
 
 module.exports = routes;

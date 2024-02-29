@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const db = require("../models/model");
 const User = db.user;
 const { returnErrors } = require('../utils/errorsUtil');
+
 async function insertNewUser(name, email, password) {
 
     const user = await User.findAll({
@@ -47,6 +48,118 @@ async function insertNewUser(name, email, password) {
 
 
 };
+async function getUserByEmail(email){
+    
+    
+  
+    try {
+        const user = await User.findAll({where:{
+            email:email
+        }});
+        if(user.length == 0){
+            return 0;
+        }else{
+            return user;
+        }
+
+    } catch (error) {
+        console.error(`Error when finding user with email "${email}"!`, error);
+    }
+
+};
+async function findAllUsers(){
+
+    try {
+        const users = await User.findAll();
+        if(users.length == 0){
+            return 0;
+        }else{
+            return users;
+        }
+    } catch (error) {
+        console.error(`Error when finding all users!`, error);
+    }
+    
+    
+};
+async function deleteUserById(user_id){
+    try {
+        const userToDelete = await User.findByPk(user_id);
+
+        if (userToDelete === null) {
+
+            return null;
+        } else {
+            try {
+                const deleted = await User.destroy({
+                    where: {
+                        user_id: user_id
+                    }
+                });
+                if (deleted == 1) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } catch (error) {
+                console.error("Error on delete =======================>", error);
+            }
+        }
+
+
+    } catch (error) {
+        console.error("Error on find ===================================>", error);
+    }
+
+}
+async function updateUserById(user_id,name,email){
+    try {
+        const userToUpdate = await User.findByPk(user_id);
+
+        if (userToUpdate === null) {
+            return null;
+        } else {
+           const options = {name,email};
+           const errors = await returnErrors(options);
+
+        if (errors == false) {
+            const userByEmail = await getUserByEmail(email);
+          if(userByEmail == 0){
+            try {
+                const user = await User.update({ name: name,email: email },
+                    {
+                        where: { user_id: user_id }
+                    });
+
+                if (user[0] === 1) {
+                    const updatedUser = await User.findByPk(user_id);
+                    return updatedUser;
+                } else {
+                    return false;
+                }
+
+            } catch (error) {
+                console.error(`Error on update music with id ==>${user_id}!`, error);
+            }
+          }else {
+                return 1;
+          }
+
+        }else{
+            
+            return errors;
+        }
+           
+        }
+    } catch (error) {
+        console.error(`Error on fin music with id ==>${user_id}!`, error);
+    }
+}
 module.exports = {
-    insertNewUser
+    insertNewUser,
+    getUserByEmail,
+    findAllUsers,
+    deleteUserById,
+    updateUserById
+
 }
