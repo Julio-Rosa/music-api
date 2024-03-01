@@ -7,7 +7,7 @@ const { insertCategoryData, findAllCategories, deleteCategorieById, findCategory
 const { insertAlbumData, findAllAlbums, findAlbumById, deleteAlbumById, updateAlbumById } = require('../controllers/albumController');
 const { insertMusicData, findAllMusics, findAllMusicsByCategoryId, findAllMusicsByArtistId, findAllMusicsByAlbumId, deleteMusicBydId, updateMusicById, findById } = require('../controllers/musicController');
 const { insertArtistData, findAllArtists, findArtistById, deleteArtistById, updateArtistById } = require('../controllers/artistController');
-const { insertNewUser, getUserByEmail, findAllUsers , deleteUserById, updateUserById} = require('../controllers/userController');
+const { insertNewUser, getUserByEmail, findAllUsers , deleteUserById, updateUserById, updatePassword, newUser} = require('../controllers/userController');
 routes.use(express.json());
 
 
@@ -271,8 +271,7 @@ routes.put('/category/update/:categoryId', async (req, res) => {
     }
 
 });
-
-
+//------------------------------------- USER ENDPOINT------------------------------------------
 routes.post('/user/new', async (req, res) => {
     const { name, email, password } = req.body;
 
@@ -347,6 +346,20 @@ routes.put('/user/update/:userId', async(req, res) => {
     }else{
         res.status(500).send(JSON.stringify({ "message": "Error when cresting a new music!" }));
     }
+});
+routes.put('/user/update/password/:userId', async(req,res)=>{
+    const {password,newPassword ,newPasswordRepeat }= req.body;
+    const user = await updatePassword(req.params.userId, password,newPassword,newPasswordRepeat );
+    if(user == 1){
+
+        res.status(400).send(JSON.stringify({"message":"Password updated!"}));
+        
+    }else if(user == false){
+        res.status(400).send(JSON.stringify({"message":"Incorrect password!"}));
+    }else if(user){
+        res.status(400).send(JSON.stringify({"errors":user}));
+    }
+   
 });
 
 module.exports = routes;

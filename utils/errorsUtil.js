@@ -51,9 +51,20 @@ async function sendErrors(options) {
         }
     }
     if (options && options.password !== undefined) {
+        
         const passErrors = await checkPassword(options.password);
         if (passErrors != false) {
             errors.push(passErrors);
+        }
+
+    }
+    if (options && options.newPassword !== undefined) {
+        
+        const passErrors = await checkPassword(options.newPassword);
+        if (passErrors != false) {
+            errors.push(passErrors);
+        }else if(options.newPassword != options.newPasswordRepeat){
+            errors.push("The repeated password must be the same as the new password");
         }
 
     }
