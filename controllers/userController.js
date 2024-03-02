@@ -1,5 +1,6 @@
 const { Sequelize, DataTypes, Model } = require('sequelize');
 const crypto = require('crypto');
+const bcrypt = require('bcrypt');
 const db = require("../models/model");
 const User = db.user;
 const { returnErrors } = require('../utils/errorsUtil');
@@ -54,31 +55,31 @@ async function insertNewUser(name, email, password) {
 
 
 };
-async function getUserByEmail(email) {
+async function getUserById(user_id) {
 
 
 
     try {
-        const user = await User.findAll({attributes: ['user_id','name','email']},{
-            where: {
-                email: email
-            },
+        const user = await User.findByPk(user_id,{attributes: ['user_id','name','email']},{
         });
-        if (user.length == 0) {
+        
+        if (user == null) {
             return 0;
         } else {
+           
             return user;
+            
         }
 
     } catch (error) {
-        console.error(`Error when finding user with email "${email}"!`, error);
+        console.error(`Error when finding user with email "${user_id}"!`, error);
     }
 
 };
 async function findAllUsers() {
 
     try {
-        const users = await User.findAll();
+        const users = await User.findAll({attributes: ['user_id','name','email']});
         if (users.length == 0) {
             return 0;
         } else {
@@ -170,12 +171,14 @@ async function updatePassword(user_id, password, newPassword, newPasswordRepeat 
         const errors = await returnErrors(options);
 
         if (errors == false) {
-            if (user.password == password) {
-                const updatedUser = await User.update({ password: newPassword }, {
+            const check = await bcrypt.compare(password, user.password);
+            if (check) {
+                const passwordHash = await encryptPassword(newPassword);
+                const updatedUser = await User.update({ password: passwordHash }, {
                     where: { user_id: user_id }
                 });
 
-
+                console.log(updatedUser.password);
                 return 1;
 
 
@@ -195,7 +198,7 @@ async function updatePassword(user_id, password, newPassword, newPasswordRepeat 
 }
 module.exports = {
     insertNewUser,
-    getUserByEmail,
+    getUserById,
     findAllUsers,
     deleteUserById,
     updateUserById,

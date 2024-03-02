@@ -7,7 +7,8 @@ const { insertCategoryData, findAllCategories, deleteCategorieById, findCategory
 const { insertAlbumData, findAllAlbums, findAlbumById, deleteAlbumById, updateAlbumById } = require('../controllers/albumController');
 const { insertMusicData, findAllMusics, findAllMusicsByCategoryId, findAllMusicsByArtistId, findAllMusicsByAlbumId, deleteMusicBydId, updateMusicById, findById } = require('../controllers/musicController');
 const { insertArtistData, findAllArtists, findArtistById, deleteArtistById, updateArtistById } = require('../controllers/artistController');
-const { insertNewUser, getUserByEmail, findAllUsers , deleteUserById, updateUserById, updatePassword, newUser} = require('../controllers/userController');
+const { insertNewUser, getUserById, findAllUsers , deleteUserById, updateUserById, updatePassword, newUser} = require('../controllers/userController');
+const {login} = require('../controllers/authController');
 routes.use(express.json());
 
 
@@ -312,8 +313,8 @@ routes.get('/user/all', async (req, res) => {
     }
     
 });
-routes.get('/user/:userEmail', async (req, res) => {
-    const user = await getUserByEmail(req.params.userEmail);
+routes.get('/user/find/:userId', async (req, res) => {
+    const user = await getUserById(req.params.userId);
     if(user == 0){
         res.status(404).send(JSON.stringify({"message":"User not found!"}));
     }else if(user){
@@ -360,6 +361,21 @@ routes.put('/user/update/password/:userId', async(req,res)=>{
         res.status(400).send(JSON.stringify({"errors":user}));
     }
    
+});
+
+
+//---------------------- AUTH ENDPOINT ---------------------------
+routes.post('/auth/login', async (req, res) =>{
+    const {email, password} = req.body;
+    const permited = await login(email,password);
+    if(permited == false){
+        res.status(400).send(JSON.stringify({"message":"Incorrect email or password"}));
+    }else if(permited){
+        res.status(200).send(JSON.stringify(permited));
+    }else{
+        res.status(500).send(JSON.stringify({"message":"Error when trying to log in"}));
+    }
+    
 });
 
 module.exports = routes;
