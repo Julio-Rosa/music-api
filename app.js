@@ -3,6 +3,7 @@ const express = require("express");
 const userRoutes = require('./routes/userRoutes');
 const authRoutes = require('./routes/authRoutes');
 const musicRoutes = require('./routes/musicRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
 const app = express();
 const db = require("./models/model");
 require('dotenv/config');
@@ -17,7 +18,7 @@ require('dotenv/config');
 
 
 
-app.use(userRoutes, authRoutes,musicRoutes);
+app.use(userRoutes, authRoutes,musicRoutes, categoryRoutes);
 
 
 

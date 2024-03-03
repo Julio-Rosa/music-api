@@ -2,124 +2,121 @@ const { Sequelize, DataTypes, Model } = require('sequelize');
 const crypto = require('crypto');
 const db = require("../models/model");
 const Category = db.category;
-async function insertCategoryData(name) {
 
-    const category = await Category.findAll({
-        where: {
-            name: name
-        }
-    });
-    if (category.length == 1) {
-        return 1;
-    } else {
-        try {
+
+const insertCategoryData = async (req, res) => {
+    try {
+        const { name } = req.body;
+        const category = await Category.findOne({
+            where: {
+                name: name
+            }
+        });
+        if (category) {
+            res.status(400).send(JSON.stringify({ "message": "A category with this name already exists" }));
+        } else {
             const category = await Category.create({
                 category_id: crypto.randomUUID(),
                 name: name
             });
 
-            return category;
-
-        } catch (error) {
-            console.error(`Error on create category with name ==>${name}`, error);
+            res.status(201).send(JSON.stringify(category));
         }
 
+    } catch (error) {
+        res.status(500).send(JSON.stringify({ "message": "Error when creating a new category" }));
+        console.error(error);
     }
 
-
 };
-async function findAllCategories() {
 
+const findAllCategories = async (req, res) => {
     try {
         const categories = await Category.findAll();
         if (categories.length > 0) {
-            return categories;
+            res.status(200).send(categories);
         } else {
-            return 0;
+            res.status(404).send({ "message": "No categories found" });
         }
 
     } catch (error) {
-        console.error(`Error on list alll categories`, error);
+        res.status(500).send({ "message": "Error when listing categories" });
+        console.error(`Error when listing  categories`, error);
     }
 };
-async function deleteCategorieById(category_id) {
+
+const deleteCategorieById = async (req, res) => {
     try {
-        const categoryToDelete = await Category.findByPk(category_id);
+        const categoryToDelete = await Category.findByPk(req.params.categoryId);
 
         if (categoryToDelete === null) {
 
-            return null;
+            res.status(404).send(JSON.stringify({ "message": "Category Not Found" }));
         } else {
-            try {
-                const deleted = await Category.destroy({
-                    where: {
-                        category_id: category_id
-                    }
-                });
-                if (deleted == 1) {
-                    return true;
-                } else {
-                    return false;
+
+            const deleted = await Category.destroy({
+                where: {
+                    category_id: req.params.categoryId
                 }
-            } catch (error) {
-                console.error(`Error when deleting category with id ==> ${category_id}`, error);
+            });
+            if (deleted == 1) {
+                res.status(200).send(JSON.stringify({ "message": "Category Deleted" }));
             }
         }
-
-
-
     } catch (error) {
-        console.error(`Error when finding the category with the id "${category_id}" to delete`, error);
+        res.status(500).send(JSON.stringify({ "message": "An error occurred while deleting" }));
+        console.error(`Error when deleting category!`, error);
     }
 };
-async function findCategoryById(category_id){
-    try{
-        const category = await Category.findByPk(category_id);
-        if(category == null){
-            return null;
-        }else{
-            return category;
+const findCategoryById = async (req, res) =>{
+    try {
+        const category = await Category.findByPk(req.params.categoryId);
+        if (category == null) {
+            res.status(404).send(JSON.stringify({ "message": "Category Not Found" }));
+        } else {
+            res.status(200).send(JSON.stringify(category));
         }
-    }catch(error){
-        console.error(`Error when finding the category with the id "${category_id}"!`, error);
+    } catch (error) {
+        res.status(500).send(JSON.stringify({ "message": "An error occurred while finding category" }));
+        console.error(`Error when finding the category with the id "${req.params.categoryId}"!`, error);
     }
 };
-async function updateCategoryById(category_id, name){
-    try{
-        const category = await Category.findByPk(category_id);
-        if(category == null){
-            return null;
-        }else{
-            const category = await Category.findAll({
+
+const updateCategoryById = async (req, res) => {
+    try {
+        const {name} = req.body;
+        const category = await Category.findByPk(req.params.categoryId);
+        if (category == null) {
+            res.status(404).send(JSON.stringify({ "message": "Category Not Found" }));
+        } else {
+          
+            const category = await Category.findOne({
                 where: {
                     name: name
                 }
             });
-            
-            if (category.length == 1 && category[0]['dataValues']['name'] != name) {
-                
-                return 1;
+            console.log("=======================================================================",category);
+            if (category !== null && category.name !== name) {
+
+                res.status(400).send(JSON.stringify({ "message": "A category with this name already exists" }));
             } else {
-                try {
+              
                     const category = await Category.update({
                         name: name
-                    },{
-                        where:{category_id:category_id}
+                    }, {
+                        where: { category_id: req.params.categoryId }
                     });
-                    const updatedCategory = await Category.findByPk(category_id);
-                    return updatedCategory;
-        
-                } catch (error) {
-                    console.error(`Error on create category with name ==>${name}`, error);
-                }
-        
+                    const updatedCategory = await Category.findByPk(req.params.categoryId);
+                    res.status(200).send(JSON.stringify(updatedCategory));
+
             }
         }
-    }catch(error){
-        console.error(`Error when finding the category with the id "${category_id}"!`, error);
+    } catch (error) {
+        res.status(500).send(JSON.stringify({ "message": "Error when updating a  category!" }));
+        console.error(`EError when updating a  category!`, error);
     }
-    
 };
+
 module.exports = {
     insertCategoryData,
     findAllCategories,
