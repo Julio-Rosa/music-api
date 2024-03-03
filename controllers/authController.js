@@ -36,7 +36,7 @@ async function login(email,password){
                 const token =  jwt.sign({
                     id:user[0]['user_id'],
                     email:user[0]['email'],
-                    roles:role
+                    roles:user[0]['role']
                 },secret);
                 return token;
             }else{

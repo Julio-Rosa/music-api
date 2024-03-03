@@ -4,204 +4,201 @@ const bcrypt = require('bcrypt');
 const db = require("../models/model");
 const User = db.user;
 const { returnErrors } = require('../utils/errorsUtil');
-const {encryptPassword} = require('../utils/encryptPassword');
-const {createRoles} = require('../utils/createRolesUtil');
+const { encryptPassword } = require('../utils/encryptPassword');
+const { createRoles } = require('../utils/createRolesUtil');
 
-
-async function insertNewUser(name, email, password, role_name) {
-
-    const user = await User.findAll({
-        where: {
-            email: email
-        }
-    });
-    if (user.length > 0) {
-
-        return 1;
-
-    } else {
-        
-        const role = await createRoles(role_name);
-        console.log(role);
-        const options = { name, password, email, role};
-        const errors = await returnErrors(options);
-        if (errors == false) {
-            try {
-               const passwordHash =  await encryptPassword(password);
-
-                const user = await User.create({
-                    user_id: crypto.randomUUID(),
-                    name: name,
-                    email: email,
-                    password: passwordHash,
-                    role:role
-                    
-                });
-               
-               return  user;
-                
-            } catch (error) {
-                console.error(`Error when creating a new user`, error);
-            }
-
-
-
-        } else {
-            return errors;
-        }
-    }
-
-
-
-
-
-
-
-
-
-
-};
-async function getUserById(user_id) {
-
-
+const insertNewUser = async (req, res) => {
 
     try {
-        const user = await User.findByPk(user_id,{attributes: ['user_id','name','email']},{
+        const { name, email, password, role_name } = req.body;
+        const user = await User.findOne({
+            where: {
+                email: email
+            }
         });
-        
-        if (user == null) {
-            return 0;
+
+        if (user) {
+
+            res.status(400).send(JSON.stringify({ "message": "User alread exists!" }));
+
         } else {
-           
-            return user;
-            
+
+            const role = await createRoles(role_name);
+
+            const options = { name, password, email, role };
+            const errors = await returnErrors(options);
+            if (errors == false) {
+                try {
+                    const passwordHash = await encryptPassword(password);
+
+                    const user = await User.create({
+                        user_id: crypto.randomUUID(),
+                        name: name,
+                        email: email,
+                        password: passwordHash,
+                        role: role
+
+                    });
+
+                    res.status(201).send(JSON.stringify(user));
+
+                } catch (error) {
+                    console.error(`Error when creating a new user`, error);
+                    res.status(500).send(JSON.stringify({ "message": "Error when creating a new user!" }));
+                }
+
+
+
+            } else {
+                res.status(400).send(JSON.stringify({ "message": errors }));
+            }
+
+        }
+    } catch (error) {
+        res.status(500).send(JSON.stringify({ "message": "Error when finding a user" }));
+    }
+}
+
+const getUserById = async (req, res)=>{
+    try {
+
+        const user = await User.findByPk(req.params.userId, { attributes: ['user_id', 'name', 'email','role'] }, {
+        });
+
+        if (user == null) {
+            res.status(404).send(JSON.stringify({"message":"User not found!"}));
+        } else {
+
+            res.status(200).send(JSON.stringify(user));
+
         }
 
     } catch (error) {
+        res.status(500).send(JSON.stringify({"message":"Error when finding user by id!"}));
         console.error(`Error when finding user with email "${user_id}"!`, error);
     }
 
 };
-async function findAllUsers() {
 
+const findAllUsers = async (req, res) => {
     try {
-        const users = await User.findAll({attributes: ['user_id','name','email']});
+        const users = await User.findAll({ attributes: ['user_id', 'name', 'email','role'] });
         if (users.length == 0) {
-            return 0;
+            res.status(404).send(JSON.stringify({ "message": "No users found!" }));
         } else {
-            return users;
+            res.status(404).send(JSON.stringify(users));
         }
     } catch (error) {
+        res.status(500).send(JSON.stringify({ "message": "Error whren finding all users!" }));
         console.error(`Error when finding all users!`, error);
     }
-
-
 };
-async function deleteUserById(user_id) {
+
+const deleteUserById = async (req, res) =>{
     try {
-        const userToDelete = await User.findByPk(user_id);
+        const userToDelete = await User.findByPk(req.params.userId);
 
         if (userToDelete === null) {
 
-            return null;
+            res.status(404).send(JSON.stringify({"message":"User not found!"}));
         } else {
             try {
                 const deleted = await User.destroy({
                     where: {
-                        user_id: user_id
+                        user_id: req.params.userId
                     }
                 });
                 if (deleted == 1) {
-                    return true;
-                } else {
-                    return false;
+                    res.status(200).send(JSON.stringify({"message":"Deleted!"}));
                 }
             } catch (error) {
-                console.error("Error on delete =======================>", error);
+                console.error("Error when deleting user ===================================>", error);
+                res.status(500).send(JSON.stringify({"message":"Error when deleting user!"}));
             }
         }
 
 
     } catch (error) {
-        console.error("Error on find ===================================>", error);
+        console.error("Error when finding ===================================>", error);
     }
+};
 
-}
-async function updateUserById(user_id, name, email) {
-    try {
-        const userToUpdate = await User.findByPk(user_id);
+const updateUserById  = async (req, res)=> {
+   try {
+        const userToUpdate = await User.findByPk(req.params.userId);
+      
+        if(userToUpdate == null){
+            res.status(500).send(JSON.stringify({"message":"User not found"})); 
+        }else{
+            const {name,email,role_name} = req.body;
+            const role = await createRoles(role_name);
 
-        if (userToUpdate === null) {
-            return null;
-        } else {
-            const options = { name, email };
+            const options = { name, email, role };
             const errors = await returnErrors(options);
-
-            if (errors == false) {
-                const userByEmail = await getUserByEmail(email);
-                if (userByEmail == 0) {
-                    try {
-                        const user = await User.update({ name: name, email: email },
-                            {
-                                where: { user_id: user_id }
-                            });
-
-                        if (user[0] === 1) {
-                            const updatedUser = await User.findByPk(user_id);
-                            return updatedUser;
-                        } else {
-                            return false;
-                        }
-
-                    } catch (error) {
-                        console.error(`Error on update music with id ==>${user_id}!`, error);
+            
+            if(errors != false){
+                res.status(500).send(JSON.stringify({"message": errors})); 
+            }else{
+                
+                const emailExists = await User.findOne({where:{email:email}});
+               
+                if(emailExists instanceof User && emailExists.user_id !== req.params.userId ){
+                    res.status(400).send(JSON.stringify({"message": "User with this email already exists!"})); 
+                }else{
+                    const updatedUser = await User.update({name:name,email:email,role:role_name},{where:{user_id: req.params.userId}});
+                    if(updatedUser == 1){
+                        const user = await User.findByPk(req.params.userId, { attributes: ['user_id', 'name', 'email','role']});
+                        res.status(200).send(JSON.stringify(user)); 
                     }
-                } else {
-                    return 1;
-                }
-
-            } else {
-
-                return errors;
+                } 
+                   
+                
             }
+            
+
 
         }
-    } catch (error) {
-        console.error(`Error on fin music with id ==>${user_id}!`, error);
-    }
-}
-async function updatePassword(user_id, password, newPassword, newPasswordRepeat ) {
+        
+   } catch (error) {
+        console.error(error);
+        res.status(500).send(JSON.stringify({"message":"Error when updating user!"}));
+   }
+};
+
+const updatePassword = async (req, res) =>{
     try {
-        const user = await User.findByPk(user_id);
+        const {password,newPassword, newPasswordRepeat} = req.body;
+        const user = await User.findByPk(req.params.userId);
         const options = { newPassword, newPasswordRepeat };
         const errors = await returnErrors(options);
-
+       
         if (errors == false) {
             const check = await bcrypt.compare(password, user.password);
             if (check) {
                 const passwordHash = await encryptPassword(newPassword);
                 const updatedUser = await User.update({ password: passwordHash }, {
-                    where: { user_id: user_id }
+                    where: { user_id: req.params.userId }
                 });
 
-                console.log(updatedUser.password);
-                return 1;
+                
+                res.status(200).send(JSON.stringify({"message":"Password updated!"}));
 
 
             } else {
-                return false;
+                res.status(400).send(JSON.stringify({"message":"Incorrect password!"}));
             }
 
         } else {
 
-            return errors;
+            res.status(400).send(JSON.stringify({"errors":errors}));
         }
     } catch (error) {
+        res.status(400).send(JSON.stringify({"message":"Error when updating password!"}));
         console.error(`Error when updating password`, error);
     }
 
-
 }
+
 module.exports = {
     insertNewUser,
     getUserById,
@@ -209,6 +206,6 @@ module.exports = {
     deleteUserById,
     updateUserById,
     updatePassword,
-   
+    
 
 }

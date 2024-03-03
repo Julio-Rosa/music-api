@@ -7,7 +7,7 @@ const { insertCategoryData, findAllCategories, deleteCategorieById, findCategory
 const { insertAlbumData, findAllAlbums, findAlbumById, deleteAlbumById, updateAlbumById } = require('../controllers/albumController');
 const { insertMusicData, findAllMusics, findAllMusicsByCategoryId, findAllMusicsByArtistId, findAllMusicsByAlbumId, deleteMusicBydId, updateMusicById, findById } = require('../controllers/musicController');
 const { insertArtistData, findAllArtists, findArtistById, deleteArtistById, updateArtistById } = require('../controllers/artistController');
-const { insertNewUser, getUserById, findAllUsers , deleteUserById, updateUserById, updatePassword, newUser} = require('../controllers/userController');
+const { insertNewUser, getUserById, findAllUsers , deleteUserById, updateUserById, updatePassword} = require('../controllers/userController');
 const {login} = require('../controllers/authController');
 
 routes.use(express.json());
@@ -274,95 +274,18 @@ routes.put('/category/update/:categoryId', async (req, res) => {
 
 });
 //------------------------------------- USER ENDPOINT------------------------------------------
-routes.post('/user/new', async (req, res) => {
-    const { name, email, password, role_name} = req.body;
 
-    const user = await insertNewUser(name, email, password, role_name);
+routes.post('/user/new', insertNewUser);
 
-    if (user == 1) {
-        res.status(400).send(JSON.stringify({ "message": "User alread exists!" }));
-    } else {
-        if (!(user instanceof User)) {
-            res.status(400).send(JSON.stringify({ "errors": user }));
-        } else {
-    
-            if (user) {
-                res.status(201).send(JSON.stringify(user));
-            } else {
-                res.status(500).send(JSON.stringify({ "message": "Error when cresating a new user!" }));
-            }
-    
-        }
+routes.get('/user/all', findAllUsers);
 
-    }
+routes.get('/user/:userId', getUserById);
 
-   
+routes.delete('/user/:userId', deleteUserById);
 
+routes.put('/user/:userId', updateUserById);
+routes.put('/user/password/:userId', updatePassword);
 
-
-
-});
-routes.get('/user/all', async (req, res) => {
-    const users = await findAllUsers();
-   
-    if(users == 0){
-        res.status(404).send(JSON.stringify({"message":"No users found!"}));
-    }else if(users){
-        res.status(200).send(JSON.stringify(users));
-    }else{
-        res.status(500).send(JSON.stringify({"message":"Error when finding all users"}));
-    }
-    
-});
-routes.get('/user/find/:userId', async (req, res) => {
-    const user = await getUserById(req.params.userId);
-    if(user == 0){
-        res.status(404).send(JSON.stringify({"message":"User not found!"}));
-    }else if(user){
-        res.status(200).send(JSON.stringify(user));
-    }else{
-        res.status(500).send(JSON.stringify({"message":"Error when finding user by email!"}));
-    }
-});
-
-routes.delete('/user/delete/:userId', async (req, res)=>{
-    const user = await deleteUserById(req.params.userId);
-    if(user == null){
-        res.status(404).send(JSON.stringify({"message":"User not found!"}));
-    }else if( user){
-        res.status(200).send(JSON.stringify({"message":"Deleted!"}));
-    }else{
-        res.status(500).send(JSON.stringify({"message":"Error when deleting user!"}));
-    }
-});
-routes.put('/user/update/:userId', async(req, res) => {
-    const {name,email} = req.body;
-    const user = await updateUserById(req.params.userId,name,email);
-    if (user == 1) {
-        res.status(400).send(JSON.stringify({"message":"User with this email already exists!"}));
-        
-    } else if (!(user instanceof User)) {
-        res.status(400).send(JSON.stringify({ "errors": user }));
-    } else if (user){
-        res.status(200).send(JSON.stringify(user));
-    }else{
-        res.status(500).send(JSON.stringify({ "message": "Error when cresting a new music!" }));
-    }
-});
-routes.put('/user/update/password/:userId', async(req,res)=>{
-    const {password,newPassword ,newPasswordRepeat }= req.body;
-    const user = await updatePassword(req.params.userId, password,newPassword,newPasswordRepeat );
-    if(user == 1){
-
-        res.status(400).send(JSON.stringify({"message":"Password updated!"}));
-        
-    }else if(user == false){
-        res.status(400).send(JSON.stringify({"message":"Incorrect password!"}));
-    }else if(user){
-        res.status(400).send(JSON.stringify({"errors":user}));
-    }
-   
-});
 
 
 //---------------------- AUTH ENDPOINT ---------------------------
