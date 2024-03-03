@@ -1,3 +1,4 @@
+const { role } = require('../models/model');
 const { isValidDate } = require('../utils/dateUtil');
 
 
@@ -43,6 +44,12 @@ async function sendErrors(options) {
 
     let errors = [];
     let errorsObject = {};
+    if(options && options.role !== undefined){
+        
+        if(!(options.role == "ADMIN" || options.role == "USER")){
+            errors.push("Invalid Role");
+        }
+    }
 
     if (options && options.email !== undefined) {
         const emailErrors = await validateEmail(options.email);

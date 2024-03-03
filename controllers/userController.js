@@ -5,9 +5,10 @@ const db = require("../models/model");
 const User = db.user;
 const { returnErrors } = require('../utils/errorsUtil');
 const {encryptPassword} = require('../utils/encryptPassword');
+const {createRoles} = require('../utils/createRolesUtil');
 
 
-async function insertNewUser(name, email, password) {
+async function insertNewUser(name, email, password, role_name) {
 
     const user = await User.findAll({
         where: {
@@ -19,7 +20,10 @@ async function insertNewUser(name, email, password) {
         return 1;
 
     } else {
-        const options = { name, password, email };
+        
+        const role = await createRoles(role_name);
+        console.log(role);
+        const options = { name, password, email, role};
         const errors = await returnErrors(options);
         if (errors == false) {
             try {
@@ -29,7 +33,9 @@ async function insertNewUser(name, email, password) {
                     user_id: crypto.randomUUID(),
                     name: name,
                     email: email,
-                    password: passwordHash
+                    password: passwordHash,
+                    role:role
+                    
                 });
                
                return  user;

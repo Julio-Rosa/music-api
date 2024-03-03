@@ -9,6 +9,7 @@ const { insertMusicData, findAllMusics, findAllMusicsByCategoryId, findAllMusics
 const { insertArtistData, findAllArtists, findArtistById, deleteArtistById, updateArtistById } = require('../controllers/artistController');
 const { insertNewUser, getUserById, findAllUsers , deleteUserById, updateUserById, updatePassword, newUser} = require('../controllers/userController');
 const {login} = require('../controllers/authController');
+
 routes.use(express.json());
 
 
@@ -274,9 +275,9 @@ routes.put('/category/update/:categoryId', async (req, res) => {
 });
 //------------------------------------- USER ENDPOINT------------------------------------------
 routes.post('/user/new', async (req, res) => {
-    const { name, email, password } = req.body;
+    const { name, email, password, role_name} = req.body;
 
-    const user = await insertNewUser(name, email, password);
+    const user = await insertNewUser(name, email, password, role_name);
 
     if (user == 1) {
         res.status(400).send(JSON.stringify({ "message": "User alread exists!" }));
