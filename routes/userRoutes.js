@@ -288,18 +288,6 @@ routes.put('/user/password/:userId', updatePassword);
 
 
 
-//---------------------- AUTH ENDPOINT ---------------------------
-routes.post('/auth/login', async (req, res) =>{
-    const {email, password} = req.body;
-    const permited = await login(email,password);
-    if(permited == false){
-        res.status(400).send(JSON.stringify({"message":"Incorrect email or password"}));
-    }else if(permited){
-        res.status(200).send(JSON.stringify(permited));
-    }else{
-        res.status(500).send(JSON.stringify({"message":"Error when trying to log in"}));
-    }
-    
-});
+
 
 module.exports = routes;

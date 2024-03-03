@@ -1,6 +1,7 @@
 
 const express = require("express");
-const routes = require('./routes/routes');
+const userRoutes = require('./routes/userRoutes');
+const authRoutes = require('./routes/loginRoutes');
 const app = express();
 const db = require("./models/model");
 require('dotenv/config');
@@ -15,7 +16,7 @@ require('dotenv/config');
 
 
 
-app.use(routes);
+app.use(userRoutes, authRoutes);
 
 
 

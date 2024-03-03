@@ -4,52 +4,47 @@ const bcrypt = require('bcrypt');
 const db = require("../models/model");
 const User = db.user;
 const { returnErrors } = require('../utils/errorsUtil');
-const {encryptPassword} = require('../utils/encryptPassword');
+const { encryptPassword } = require('../utils/encryptPassword');
 const jwt = require("jsonwebtoken");
 require('dotenv/config');
 
 
 
-
-
-async function login(email,password){
+const login = async (req, res) => {
     try {
-        const user = await User.findAll({
+        const { email, password } = req.body;
+        const user = await User.findOne({
             where: {
                 email: email
             }
         });
-    
-       
-        if(user.length > 0){
-         
-            
-            const check = await bcrypt.compare(password,user[0]['password']);
-           
-            if(check){
-                
-                
-                
-               
+        if (user) {
+            const check = await bcrypt.compare(password, user.password);
+
+            if (check) {
                 const secret = process.env.SECRET;
-               
-                const token =  jwt.sign({
-                    id:user[0]['user_id'],
-                    email:user[0]['email'],
-                    roles:user[0]['role']
-                },secret);
-                return token;
-            }else{
-                return false;
+                const token = jwt.sign({
+                    id: user.id,
+                    email: user.email,
+                    roles: user.role
+                }, secret);
+                res.status(200).send(JSON.stringify({ "token": token }));
+            } else {
+                res.status(400).send(JSON.stringify({ "message": "Incorrect email or password" }));
             }
-           
-        }else{
-            return false;
+
+        } else {
+            res.status(400).send(JSON.stringify({ "message": "Incorrect email or password" }));
         }
     } catch (error) {
+        res.status(500).send(JSON.stringify({ "message": "Error when trying to log in" }));
         console.error(`Erro when login!`, error);
     }
-}
+
+
+};
+
+
 
 module.exports = {
     login
