@@ -5,17 +5,17 @@ const { returnErrors } = require('../utils/errorsUtil');
 const Music = db.music;
 
 //------------------------- INSERT NEW MUSIC -----------------------------
-async function insertMusicData(name,release_date, album_id, artist_id, category_id) {
-    const options = {release_date};
-    const errors = await returnErrors(options);
-    if(errors != false){
-        return errors;
-    }else{
-        try {
-       
-        
+const insertMusicData = async (req, res) => {
 
-       
+
+    try {
+        const {release_date, name, album_id, artist_id, category_id} = req.body;
+        const options = { release_date };
+        const errors = await returnErrors(options);
+        if (errors != false) {
+            res.status(400).send(JSON.stringify({ "errors": errors }));
+        } else {
+
             const music = await Music.create({
                 music_id: crypto.randomUUID(),
                 release_date: release_date,
@@ -24,115 +24,118 @@ async function insertMusicData(name,release_date, album_id, artist_id, category_
                 artist_id: artist_id,
                 category_id: category_id
             });
-            return music;
-        
-
-
-
-       
+            res.status(201).send(JSON.stringify(music));
+        }
     } catch (error) {
+        res.status(500).send(JSON.stringify({ "message": "Error when cresting a new music!" }));
         console.error(`Error whren creating a new music!`, error);
     }
-    }
-   
-
-  
 };
 
 //------------------------ FIND ALL MUSICS -----------------------------
-async function findAllMusics() {
 
+const findAllMusics = async (req, res) => {
     try {
         const musics = await Music.findAll();
 
         if (musics.length != 0) {
-            return musics;
+            res.status(200).send(JSON.stringify(musics));
         } else if (musics.length == 0) {
 
-            return 0;
+            res.status(404).send(JSON.stringify({ "message": "No musics were found" }));
         }
 
     } catch (error) {
-        console.error("Error to find!======================>", error)
+        res.status(500).send(JSON.stringify({ "message": "Error when listing musics" }));
+        console.error("Error to find!======================>", error);
     }
 
 };
 ///--------------- FIND ALL MUSICS BY CATEGORY ID -------------------
-async function findAllMusicsByCategoryId(category_id) {
+const findAllMusicsByCategoryId = async (req, res) => {
     try {
         const musics = await Music.findAll({
             where: {
-                category_id: category_id
+                category_id: req.params.categoryId
             }
         });
         if (musics.length > 0) {
-            return musics;
+            res.status(200).send(JSON.stringify(musics));
         } else {
-            return false;
+            res.status(404).send(JSON.stringify({ "message": "Music not Found!" }));
         }
 
 
     } catch (error) {
-        console.error("Error on find ==========>", error)
+        res.status(404).send(JSON.stringify({ "message": "Error when finding all musics!" }));
+        console.error("Error when find ==========>", error)
     }
 
 
 };
+
 //----------------------- FIND ALL MUSICS BY ARTIST ID -----------------------------
-async function findAllMusicsByArtistId(artist_id) {
+const findAllMusicsByArtistId = async (req, res) =>{
     try {
         const musics = await Music.findAll({
             where: {
-                artist_id: artist_id
+                artist_id: req.params.artistId
             }
         });
         if (musics.length > 0) {
-            return musics;
+            res.status(200).send(JSON.stringify(musics));
         } else {
-            return false;
+            res.status(404).send(JSON.stringify({ "message": "Music Not Found!" }));
         }
     } catch (error) {
+        res.status(500).send(JSON.stringify({ "message": "Error when finding all musics!" }));
         console.error("Error on find ===================================>", error);
     }
+
 };
+
 //----------------------- FIND ALL MUSICS BY ALMBUM ID -----------------------------
-async function findAllMusicsByAlbumId(album_id) {
+const findAllMusicsByAlbumId = async (req, res) =>{
     try {
         const musics = await Music.findAll({
             where: {
-                album_id: album_id
+                album_id: req.params.albumId
             }
         });
         if (musics.length > 0) {
-            return musics;
+            res.status(200).send(JSON.stringify(musics));
         } else {
-            return false;
+            res.status(404).send(JSON.stringify({ "message": "Musics not found!" }));
         }
     } catch (error) {
+        res.status(500).send(JSON.stringify({ "message": "Error when finding all musics!" }));
         console.error("Error on find ===================================>", error);
     }
+
 };
+
 // ------------------------------------ DELETE MUSIC BY ID ----------------------------------------
-async function deleteMusicBydId(music_id) {
+const deleteMusicBydId = async (req, res) =>{
     try {
-        const musicToDelete = await Music.findByPk(music_id);
+        const musicToDelete = await Music.findByPk(req.params.musicId);
 
         if (musicToDelete === null) {
 
-            return null;
+            res.status(404).send(JSON.stringify({ "message": "Music Not Found" }));
         } else {
             try {
                 const deleted = await Music.destroy({
                     where: {
-                        music_id: music_id
+                        music_id: req.params.musicId
                     }
                 });
                 if (deleted == 1) {
-                    return true;
+                    res.status(200).send(JSON.stringify({ "message": "Deleted!" }));
                 } else {
-                    return false;
+                    res.status(500).send(JSON.stringify({ "message": "An error occurred while deleting" }));
                 }
             } catch (error) {
+                res.status(500).send(JSON.stringify({ "message": "An error occurred while deleting" }));
                 console.error("Error on delete =======================>", error);
             }
         }
@@ -141,67 +144,68 @@ async function deleteMusicBydId(music_id) {
     } catch (error) {
         console.error("Error on find ===================================>", error);
     }
-}
+
+};
 
 //--------------------------------- UPDATE MUSIC BY ID -----------------------
-async function updateMusicById(id, name, release_date, album_id, category_id, artist_id) {
-
-
+const updateMusicById = async (req, res) =>{
     try {
-        const musicToUpdate = await Music.findByPk(id);
+        const musicToUpdate = await Music.findByPk(req.params.musicId);
 
         if (musicToUpdate === null) {
-            return null;
+            res.status(404).send(JSON.stringify({ "message": "Music Not Found" }));
         } else {
-            const errors = await sendErrors(release_date);
+            const {name,release_date,album_id,category_id,artist_id} = req.body;
+            const errors = await returnErrors({release_date});
 
-        if (Object.keys(errors).length > 0) {
-            return errors;
+            if (errors != false) {
+                res.status(400).send(JSON.stringify({ "errors": errors }));
 
-        }else{
-            try {
-                const music = await Music.update({ name: name, release_date: release_date, album_id: album_id, category_id: category_id, artist_id: artist_id },
-                    {
-                        where: { music_id: id }
-                    });
+            } else {
+                try {
+                    const music = await Music.update({ name: name, release_date: release_date, album_id: album_id, category_id: category_id, artist_id: artist_id },
+                        {
+                            where: { music_id: req.params.musicId }
+                        });
 
-                if (music[0] === 1) {
-                    const updatedMusic = await Music.findByPk(id);
-                    return updatedMusic;
-                } else {
-                    return false;
+                    if (music[0] === 1) {
+                        const updatedMusic = await Music.findByPk(req.params.musicId);
+                        res.status(200).send(JSON.stringify(updatedMusic));
+                    } else {
+                        res.status(500).send(JSON.stringify({ "message": "An error occurred when updating!" }));
+                    }
+
+                } catch (error) {
+                    res.status(500).send(JSON.stringify({ "message": "An error occurred when updating!" }));
+                    console.error(`Error on update music with id ==>${req.params.musicId}!`, error);
                 }
 
-            } catch (error) {
-                console.error(`Error on update music with id ==>${id}!`, error);
             }
 
         }
-           
-        }
     } catch (error) {
-        console.error(`Error on fin music with id ==>${id}!`, error);
+        console.error(`Error on fin music with id ==>${req.params.musicId}!`, error);
     }
 
 
+};
 
-
-
-}
-async function findById(music_id) {
+const findById = async (req, res) =>{
     try {
-        const music = await Music.findByPk(music_id);
+        const music = await Music.findByPk(req.params.musicId);
         if (music === null) {
-            return null;
+            res.status(404).send(JSON.stringify({ "message": "Music Not Found" }));
         } else {
-            return music;
+            res.status(200).send(JSON.stringify(music));
         }
 
 
     } catch (error) {
-        console.error(`Error on find music with id ==>${music_id}!`, error);
+        res.status(500).send(JSON.stringify({ "message": "An error occurred when finding  music!" }));
+        console.error(`Error on find music with id ==>${req.params.musicId}!`, error);
     }
-}
+};
+
 module.exports = {
     insertMusicData,
     findAllMusics,
