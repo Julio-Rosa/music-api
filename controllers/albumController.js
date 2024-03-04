@@ -3,7 +3,8 @@ const crypto = require('crypto');
 const db = require("../models/model");
 const Album = db.album;
 
-async function insertAlbumData(name,image_url, artist_id) {
+const insertAlbumData =  async (req, res) => {
+    const {name,artist_id,image_url} = req.body;
     try {
         const album = await Album.create({
             album_id:crypto.randomUUID(),
@@ -11,92 +12,107 @@ async function insertAlbumData(name,image_url, artist_id) {
             artist_id: artist_id,
             image_url:image_url
         });
-        return album;
+        res.status(201).send(JSON.stringify(album));
     } catch (error) {
-        console.error(`Error on create new album`, error);
+        res.status(500).send(JSON.stringify({ "message": "Error when creating a new album!" }));
+        console.error(`Error when creating new album`, error);
     }
 };
 
-async function findAllAlbums() {
+const findAllAlbums = async (req, res) => {
     try {
         const albums = await Album.findAll();
         if (albums.length > 0) {
-            return albums;
+            res.status(200).send(JSON.stringify(albums));
         } else {
-            return 0;
+            res.status(404).send(JSON.stringify({ "message": "No albums found!" }));
         }
     } catch (error) {
+        res.status(500).send(JSON.stringify({ "message": "Error when  listing all albums!" }));
         console.error(`Error listing all albums`, error);
     }
 
 };
 
-async function findAlbumById(album_id) {
+const findAlbumById = async (req, res) => {
     try {
-        const album = await Album.findAll({
+        const album = await Album.findOne({
             where: {
-                album_id: album_id
+                album_id: req.params.albumId
             }
         });
-
-        if (album.length > 0) {
-            return album;
+       
+        if (album !== null) {
+            res.status(200).send(JSON.stringify(album));
         }else{
-            return 0;
+            res.status(404).send(JSON.stringify({ "message": "Album not found!" }));
         }
     } catch (error) {
-        console.error(`Error when listing album with id ${album_id}`, error);
+        res.status(500).send(JSON.stringify({ "message": "Error when listing album by id!" }));
+        console.error(`Error when listing album with id ${req.params.albumId}`, error);
     }
 }
 
-async function deleteAlbumById(album_id){
-     const album = await findAlbumById(album_id);
-     if(album == 0){
-        return 0;
-     }else{
-        try {
-            const deleted = await Album.destroy({
-                where: {
-                    album_id: album_id
-                }
-            });
-            if (deleted == 1) {
-                return true;
-            } else {
-                return false;
-            }
-        } catch (error) {
-            console.error(`Error when deleting album with id "${album_id}"`, error);
-        }
-     }
-};
 
-async function updateAlbumById(album_id, name,image_url,artist_id){
-    const albumToUpdate = await findAlbumById(album_id);
-    if(albumToUpdate == 0){
-        return 0;
-    }else{
+const deleteAlbumById = async (req, res) => {
+     
+     
         try {
-            const album = await Album.update({name:name,image_url:image_url,artist_id:artist_id},
-                {
-                    where:{
-                        album_id:album_id
-                        
+            const album = await Album.findByPk(req.params.albumId);
+           
+            if(album == null){
+               
+                res.status(404).send(JSON.stringify({ "message": "Album Not Found!" }));
+            }else{
+                const deleted = await Album.destroy({
+                    where: {
+                        album_id: req.params.albumId
                     }
                 });
-                if(album[0] === 1){
-                    const updatedAlbum = await Album.findByPk(album_id);
-                    return updatedAlbum;
-                }else{
-                    return false;
-                }
-
+                if (deleted == 1) {
+                    res.status(200).send(JSON.stringify({ "message": "Deleted!" }));
+                } 
+            }
             
         } catch (error) {
-            console.error(`Error when updating album with id "${album_id}"`, error);
+            res.status(500).send(JSON.stringify({ "message": "An error occurred while deleting!" }));
+            console.error(`Error while deleting album with id "${req.params.albumId}"`, error);
+        }
+     
+};
+
+const  updateAlbumById = async (req, res)=>{
+  
+   
+        try {
+            const albumToUpdate = await Album.findByPk(req.params.albumId);
+            if(albumToUpdate == null){
+                res.status(404).send(JSON.stringify({ "message": "Album Not Found!" }));
+            }else{
+                const {name,image_url,artist_id} = req.body;
+
+                const album = await Album.update({name:name,image_url:image_url,artist_id:artist_id},
+                    {
+                        where:{
+                            album_id:req.params.albumId
+                            
+                        }
+                    });
+                    if(album[0] === 1){
+                        const updatedAlbum = await Album.findByPk(req.params.albumId);
+                        res.status(200).send(JSON.stringify(updatedAlbum));;
+                    }
+
+            }
+
+           
+            
+        } catch (error) {
+            res.status(500).send(JSON.stringify({ "message": "An error occurred while updating" }));
+            console.error(`Error when updating album with id "${req.params.albumId}"`, error);
         }
     }
-};
+
 
 module.exports = {
     insertAlbumData,

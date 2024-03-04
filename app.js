@@ -5,6 +5,7 @@ const authRoutes = require('./routes/authRoutes');
 const musicRoutes = require('./routes/musicRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const artistRoutes = require('./routes/artistRoutes');
+const albumRoutes = require('./routes/albumRoutes');
 const app = express();
 const db = require("./models/model");
 require('dotenv/config');
@@ -19,7 +20,7 @@ require('dotenv/config');
 
 
 
-app.use(userRoutes, authRoutes,musicRoutes, categoryRoutes,artistRoutes);
+app.use(userRoutes, authRoutes,musicRoutes, categoryRoutes,artistRoutes, albumRoutes);
 
 
 
