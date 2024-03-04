@@ -5,7 +5,6 @@ const User = db.user;
 const routes = express.Router();
 
 const { insertAlbumData, findAllAlbums, findAlbumById, deleteAlbumById, updateAlbumById } = require('../controllers/albumController');
-const { insertArtistData, findAllArtists, findArtistById, deleteArtistById, updateArtistById } = require('../controllers/artistController');
 const { insertNewUser, getUserById, findAllUsers , deleteUserById, updateUserById, updatePassword} = require('../controllers/userController');
 const {login} = require('../controllers/authController');
 
@@ -72,54 +71,6 @@ routes.put('/album/update/:albumId', async (req, res) => {
 });
 
 //---------------------- ARTIST ENDPOINT-------------------------------------------
-
-routes.post('/artist/new', async (req, res) => {
-    const { name, image_url } = req.body;
-    const artist = await insertArtistData(name, image_url);
-    res.status(201).send(artist);
-});
-routes.get('/artist/all', async (req, res) => {
-    const artists = await findAllArtists();
-    if (artists == 0) {
-        res.status(404).send(JSON.stringify({ "message": "No artists found!" }));
-    } else if (artists) {
-        res.status(200).send(JSON.stringify(artists));
-    } else {
-        res.status(500).send(JSON.stringify({ "message": "Error listing all artists!" }));
-    }
-});
-routes.get('/artist/:artistId', async (req, res) => {
-    const artist = await findArtistById(req.params.artistId);
-    if (artist == null) {
-        res.status(404).send(JSON.stringify({ "message": "No artist found with this id!" }));
-    } else if (artist) {
-        res.status(200).send(JSON.stringify(artist));
-    } else {
-        res.status(500).send(JSON.stringify({ "message": "Error when listing  artist by id!" }));
-    }
-});
-routes.delete('/artist/delete/:artistId', async (req, res) => {
-    const deleted = await deleteArtistById(req.params.artistId);
-    if (deleted == false) {
-        res.status(404).send(JSON.stringify({ "message": "No artist found with this id!" }));
-    } else if (deleted == true) {
-
-        res.status(200).send(JSON.stringify({ "message": "Deleted!" }));
-    } else {
-        res.status(500).send(JSON.stringify({ "message": "Error when deleting  artist by id!" }));
-    }
-});
-routes.put('/artist/update/:artistId', async (req, res) => {
-    const { name, image_url } = req.body;
-    const artist = await updateArtistById(req.params.artistId, name, image_url);
-    if (artist == null) {
-        res.status(404).send(JSON.stringify({ "message": "Artist not found!" }));
-    } else if (artist) {
-        res.status(200).send(JSON.stringify(artist));
-    } else {
-        res.status(500).send(JSON.stringify({ "message": "Error when updating artist!" }));
-    }
-});
 
 
 

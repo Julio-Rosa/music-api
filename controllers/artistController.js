@@ -1,82 +1,95 @@
 const { Sequelize, DataTypes, Model } = require('sequelize');
+
 const crypto = require('crypto');
 const db = require("../models/model");
 const Artist = db.artist;
 
 
-async function insertArtistData(name,image_url) {
+const insertArtistData = async (req, res) => {
+    const { name, image_url } = req.body;
     try {
-        const artist = Artist.create({
+        const artist = await Artist.create({
             artist_id: crypto.randomUUID(),
             name: name,
             image_url: image_url
         });
-        return artist;
+        console.log(artist);
+        res.status(201).send(JSON.stringify(artist));
     } catch (error) {
+        res.status(500).send(JSON.stringify({ "message": "Error when creating a new artist" }));
         console.error(`Error when creating a new artist`, error);
     }
+
 };
 
-async function findAllArtists() {
+
+const findAllArtists = async (req, res) => {
     try {
         const artists = await Artist.findAll();
         if (artists.length > 0) {
-            return artists;
+            res.status(200).send(JSON.stringify(artists));
         } else {
-            return 0;
+            res.status(404).send(JSON.stringify({ "message": "No artists found!" }));
         }
 
 
     } catch (error) {
+        res.status(500).send(JSON.stringify({ "message": "Error when listing all artists!" }));
         console.error(`Error listing all artists!`, error);
     }
+
 };
-async function findArtistById(artist_id) {
+
+const findArtistById = async (req, res) => {
     try {
-        const artist = await Artist.findByPk(artist_id);
+        const artist = await Artist.findByPk(req.params.artistId);
         if (artist == null) {
-            return null;
+            res.status(404).send(JSON.stringify({ "message": "No artist found with this id!" }));
         } else {
-            return artist;
+            res.status(200).send(JSON.stringify(artist));
         }
-
-
-
     } catch (error) {
-        console.error(`Error when finding artist with id "${artist_id}"!`, error);
+        res.status(500).send(JSON.stringify({ "message": "Error when listing  artist by id!" }));
+        console.error(`Error when finding artist with id "${req.params.artistId}"!`, error);
     }
 };
-async function deleteArtistById(artist_id) {
+const deleteArtistById = async (req, res) => {
+
+
     try {
-        const artistToDelete = await findArtistById(artist_id);
+        const artistToDelete = await Artist.findByPk(req.params.artistId);
         if (artistToDelete == null) {
-            return false;
+            res.status(404).send(JSON.stringify({ "message": "Artist not found!" }));
         } else {
-            const deleted = await Artist.destroy({ where: { artist_id: artist_id } });
+            const deleted = await Artist.destroy({ where: { artist_id: req.params.artistId } });
             if (deleted == 1) {
 
-                return true;
+                res.status(200).send(JSON.stringify({ "message": "Deleted!" }));
             }
         }
     } catch (error) {
-        console.error(`Error when deleting artist with id "${artist_id}!"`, error);
+        res.status(500).send(JSON.stringify({ "message": "Error when deleting  artist by id!" }));
+        console.error(`Error when deleting artist with id "${req.params.artistId}!"`, error);
     }
 };
-async function updateArtistById(artist_id, name, image_url) {
-   
+const updateArtistById = async (req, res) => {
+
     try {
-        const artistToUpdate = findArtistById(artist_id);
+        const { name, image_url } = req.body;
+        const artistToUpdate = await Artist.findByPk(req.params.artistId);
         if (artistToUpdate == null) {
-            return null;
+            res.status(404).send(JSON.stringify({ "message": "Artist not found!" }));
         } else {
-            await Artist.update({ name: name, image_url: image_url }, { where: { artist_id: artist_id } });
-            const updatedArtist = await Artist.findByPk(artist_id);
-            return updatedArtist;
+            await Artist.update({ name: name, image_url: image_url }, { where: { artist_id: req.params.artistId } });
+            const updatedArtist = await Artist.findByPk(req.params.artistId);
+
+            res.status(200).send(JSON.stringify(updatedArtist));
         }
 
 
     } catch (error) {
-        console.error(`Error when updating artist with id "${artist_id}"`, error)
+        res.status(500).send(JSON.stringify({ "message": "Error when updating artist!" }));
+        console.error(`Error when updating artist with id "${req.params.artistId}"`, error)
     }
 };
 module.exports = {
@@ -85,6 +98,6 @@ module.exports = {
     findArtistById,
     deleteArtistById,
     updateArtistById,
-    
+
 
 }
