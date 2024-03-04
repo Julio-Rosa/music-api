@@ -95,8 +95,8 @@ const updateCategoryById = async (req, res) => {
                     name: name
                 }
             });
-            console.log("=======================================================================",category);
-            if (category !== null && category.name !== name) {
+          
+            if ((category !== null) && (category.category_id !== req.params.categoryId)) {
 
                 res.status(400).send(JSON.stringify({ "message": "A category with this name already exists" }));
             } else {
