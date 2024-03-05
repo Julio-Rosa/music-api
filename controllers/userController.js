@@ -6,70 +6,81 @@ const User = db.user;
 const { returnErrors } = require('../utils/errorsUtil');
 const { encryptPassword } = require('../utils/encryptPassword');
 const { createRoles } = require('../utils/createRolesUtil');
+const { verifyToken } = require('../utils/tokenUtils');
+const { isAdmin } = require('../middlewares/authorizationMiddleware');
+require('dotenv/config');
 
 const insertNewUser = async (req, res) => {
 
     try {
         const tokenHeader = req.headers["authorization"];
-        jwt.verify(token, SECRET);
-       
-        const { name, email, password, role_name } = req.body;
-        const user = await User.findOne({
-            where: {
-                email: email
+        if (tokenHeader) {
+            const authorized = await isAdmin(tokenHeader);
+            if (authorized) {
+                const { name, email, password, role_name } = req.body;
+                const user = await User.findOne({
+                    where: {
+                        email: email
+                    }
+                });
+
+                if (user) {
+
+                    res.status(400).send(JSON.stringify({ "message": "User alread exists!" }));
+
+                } else {
+
+                    const role = await createRoles(role_name);
+
+                    const options = { name, password, email, role };
+                    const errors = await returnErrors(options);
+                    if (errors == false) {
+                        try {
+                            const passwordHash = await encryptPassword(password);
+
+                            const user = await User.create({
+                                user_id: crypto.randomUUID(),
+                                name: name,
+                                email: email,
+                                password: passwordHash,
+                                role: role
+
+                            });
+
+                            res.status(201).send(JSON.stringify(user));
+
+                        } catch (error) {
+                            console.error(`Error when creating a new user`, error);
+                            res.status(500).send(JSON.stringify({ "message": "Error when creating a new user!" }));
+                        }
+
+
+
+                    } else {
+                        res.status(400).send(JSON.stringify({ "message": errors }));
+                    }
+
+                }
+            } else {
+                res.status(403).send(JSON.stringify({ "message": "Not authorized!" }));
             }
-        });
-
-        if (user) {
-
-            res.status(400).send(JSON.stringify({ "message": "User alread exists!" }));
 
         } else {
-
-            const role = await createRoles(role_name);
-
-            const options = { name, password, email, role };
-            const errors = await returnErrors(options);
-            if (errors == false) {
-                try {
-                    const passwordHash = await encryptPassword(password);
-
-                    const user = await User.create({
-                        user_id: crypto.randomUUID(),
-                        name: name,
-                        email: email,
-                        password: passwordHash,
-                        role: role
-
-                    });
-
-                    res.status(201).send(JSON.stringify(user));
-
-                } catch (error) {
-                    console.error(`Error when creating a new user`, error);
-                    res.status(500).send(JSON.stringify({ "message": "Error when creating a new user!" }));
-                }
-
-
-
-            } else {
-                res.status(400).send(JSON.stringify({ "message": errors }));
-            }
-
+            res.status(403).send(JSON.stringify({ "message": "Invalid token" }));
         }
     } catch (error) {
         res.status(500).send(JSON.stringify({ "message": "Error when finding a user" }));
     }
 }
 
-const getUserById = async (req, res)=>{
+const getUserById = async (req, res) => {
     try {
 
-        const user = await User.findByPk(req.params.userId, { attributes: ['user_id', 'name', 'email','role'] }, {
+        const user = await User.findByPk(req.params.userId, { attributes: ['user_id', 'name', 'email', 'role'] }, {
         });
 
         if (user == null) {
-            res.status(404).send(JSON.stringify({"message":"User not found!"}));
+            res.status(404).send(JSON.stringify({ "message": "User not found!" }));
         } else {
 
             res.status(200).send(JSON.stringify(user));
@@ -77,7 +88,7 @@ const getUserById = async (req, res)=>{
         }
 
     } catch (error) {
-        res.status(500).send(JSON.stringify({"message":"Error when finding user by id!"}));
+        res.status(500).send(JSON.stringify({ "message": "Error when finding user by id!" }));
         console.error(`Error when finding user with email "${user_id}"!`, error);
     }
 
@@ -85,7 +96,7 @@ const getUserById = async (req, res)=>{
 
 const findAllUsers = async (req, res) => {
     try {
-        const users = await User.findAll({ attributes: ['user_id', 'name', 'email','role'] });
+        const users = await User.findAll({ attributes: ['user_id', 'name', 'email', 'role'] });
         if (users.length == 0) {
             res.status(404).send(JSON.stringify({ "message": "No users found!" }));
         } else {
@@ -97,13 +108,13 @@ const findAllUsers = async (req, res) => {
     }
 };
 
-const deleteUserById = async (req, res) =>{
+const deleteUserById = async (req, res) => {
     try {
         const userToDelete = await User.findByPk(req.params.userId);
 
         if (userToDelete === null) {
 
-            res.status(404).send(JSON.stringify({"message":"User not found!"}));
+            res.status(404).send(JSON.stringify({ "message": "User not found!" }));
         } else {
             try {
                 const deleted = await User.destroy({
@@ -112,11 +123,11 @@ const deleteUserById = async (req, res) =>{
                     }
                 });
                 if (deleted == 1) {
-                    res.status(200).send(JSON.stringify({"message":"Deleted!"}));
+                    res.status(200).send(JSON.stringify({ "message": "Deleted!" }));
                 }
             } catch (error) {
                 console.error("Error when deleting user ===================================>", error);
-                res.status(500).send(JSON.stringify({"message":"Error when deleting user!"}));
+                res.status(500).send(JSON.stringify({ "message": "Error when deleting user!" }));
             }
         }
 
@@ -126,55 +137,55 @@ const deleteUserById = async (req, res) =>{
     }
 };
 
-const updateUserById  = async (req, res)=> {
-   try {
+const updateUserById = async (req, res) => {
+    try {
         const userToUpdate = await User.findByPk(req.params.userId);
-      
-        if(userToUpdate == null){
-            res.status(500).send(JSON.stringify({"message":"User not found"})); 
-        }else{
-            const {name,email,role_name} = req.body;
+
+        if (userToUpdate == null) {
+            res.status(500).send(JSON.stringify({ "message": "User not found" }));
+        } else {
+            const { name, email, role_name } = req.body;
             const role = await createRoles(role_name);
 
             const options = { name, email, role };
             const errors = await returnErrors(options);
-            
-            if(errors != false){
-                res.status(500).send(JSON.stringify({"message": errors})); 
-            }else{
-                
-                const emailExists = await User.findOne({where:{email:email}});
-               
-                if(emailExists instanceof User && emailExists.user_id !== req.params.userId ){
-                    res.status(400).send(JSON.stringify({"message": "User with this email already exists!"})); 
-                }else{
-                    const updatedUser = await User.update({name:name,email:email,role:role_name},{where:{user_id: req.params.userId}});
-                    if(updatedUser == 1){
-                        const user = await User.findByPk(req.params.userId, { attributes: ['user_id', 'name', 'email','role']});
-                        res.status(200).send(JSON.stringify(user)); 
+
+            if (errors != false) {
+                res.status(500).send(JSON.stringify({ "message": errors }));
+            } else {
+
+                const emailExists = await User.findOne({ where: { email: email } });
+
+                if (emailExists instanceof User && emailExists.user_id !== req.params.userId) {
+                    res.status(400).send(JSON.stringify({ "message": "User with this email already exists!" }));
+                } else {
+                    const updatedUser = await User.update({ name: name, email: email, role: role_name }, { where: { user_id: req.params.userId } });
+                    if (updatedUser == 1) {
+                        const user = await User.findByPk(req.params.userId, { attributes: ['user_id', 'name', 'email', 'role'] });
+                        res.status(200).send(JSON.stringify(user));
                     }
-                } 
-                   
-                
+                }
+
+
             }
-            
+
 
 
         }
-        
-   } catch (error) {
+
+    } catch (error) {
         console.error(error);
-        res.status(500).send(JSON.stringify({"message":"Error when updating user!"}));
-   }
+        res.status(500).send(JSON.stringify({ "message": "Error when updating user!" }));
+    }
 };
 
-const updatePassword = async (req, res) =>{
+const updatePassword = async (req, res) => {
     try {
-        const {password,newPassword, newPasswordRepeat} = req.body;
+        const { password, newPassword, newPasswordRepeat } = req.body;
         const user = await User.findByPk(req.params.userId);
         const options = { newPassword, newPasswordRepeat };
         const errors = await returnErrors(options);
-       
+
         if (errors == false) {
             const check = await bcrypt.compare(password, user.password);
             if (check) {
@@ -183,20 +194,20 @@ const updatePassword = async (req, res) =>{
                     where: { user_id: req.params.userId }
                 });
 
-                
-                res.status(200).send(JSON.stringify({"message":"Password updated!"}));
+
+                res.status(200).send(JSON.stringify({ "message": "Password updated!" }));
 
 
             } else {
-                res.status(400).send(JSON.stringify({"message":"Incorrect password!"}));
+                res.status(400).send(JSON.stringify({ "message": "Incorrect password!" }));
             }
 
         } else {
 
-            res.status(400).send(JSON.stringify({"errors":errors}));
+            res.status(400).send(JSON.stringify({ "errors": errors }));
         }
     } catch (error) {
-        res.status(400).send(JSON.stringify({"message":"Error when updating password!"}));
+        res.status(400).send(JSON.stringify({ "message": "Error when updating password!" }));
         console.error(`Error when updating password`, error);
     }
 
@@ -209,6 +220,6 @@ module.exports = {
     deleteUserById,
     updateUserById,
     updatePassword,
-    
+
 
 }

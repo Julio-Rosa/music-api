@@ -1,16 +1,22 @@
 const jwt = require("jsonwebtoken");
-async function createToken(secret, user){
-    const token = jwt.sign({
-        id: user.id,
-        email: user.email,
-        roles: user.role
-    }, secret);
-
+async function createToken(secret, user) {
+    
+    const token = jwt.sign({id:user.user_id}, secret,{expiresIn: '1h'});
+ 
+  
     return token;
 };
 
-async function verifyToken(secret,token){
-    console.log(token);
+ async function verifyToken(token, secret) {
+    try {
+      
+        const decoded = jwt.verify(token,secret);    
+        return decoded;
+        
+    } catch (error) {
+        console.log("========================================================>", error);
+        
+    }
 }
 
 
