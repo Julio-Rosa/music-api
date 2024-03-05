@@ -6,73 +6,55 @@ const User = db.user;
 const { returnErrors } = require('../utils/errorsUtil');
 const { encryptPassword } = require('../utils/encryptPassword');
 const { createRoles } = require('../utils/createRolesUtil');
-const { verifyToken } = require('../utils/tokenUtils');
-const { isAdmin } = require('../middlewares/authorizationMiddleware');
+const { isAdmin, isAdminAndSameUser, returnRole } = require('../middlewares/authorizationMiddleware');
 require('dotenv/config');
 
-const insertNewUser = async (req, res) => {
 
+const insertNewUser = async (req, res) => {
     try {
         const tokenHeader = req.headers["authorization"];
-        if (tokenHeader) {
-            const authorized = await isAdmin(tokenHeader);
-            if (authorized) {
-                const { name, email, password, role_name } = req.body;
-                const user = await User.findOne({
-                    where: {
-                        email: email
-                    }
-                });
-
-                if (user) {
-
-                    res.status(400).send(JSON.stringify({ "message": "User alread exists!" }));
-
-                } else {
-
-                    const role = await createRoles(role_name);
-
-                    const options = { name, password, email, role };
-                    const errors = await returnErrors(options);
-                    if (errors == false) {
-                        try {
-                            const passwordHash = await encryptPassword(password);
-
-                            const user = await User.create({
-                                user_id: crypto.randomUUID(),
-                                name: name,
-                                email: email,
-                                password: passwordHash,
-                                role: role
-
-                            });
-
-                            res.status(201).send(JSON.stringify(user));
-
-                        } catch (error) {
-                            console.error(`Error when creating a new user`, error);
-                            res.status(500).send(JSON.stringify({ "message": "Error when creating a new user!" }));
-                        }
-
-
-
-                    } else {
-                        res.status(400).send(JSON.stringify({ "message": errors }));
-                    }
-
-                }
-            } else {
-                res.status(403).send(JSON.stringify({ "message": "Not authorized!" }));
-            }
-
-        } else {
-            res.status(403).send(JSON.stringify({ "message": "Invalid token" }));
+        if (!tokenHeader) {
+            return res.status(403).send(JSON.stringify({ "message": "Invalid token" }));
         }
+
+        const authorized = await isAdmin(tokenHeader);
+
+        if (!authorized) {
+            return res.status(403).send(JSON.stringify({ "message": "Not authorized!" }));
+        }
+
+        const { name, email, password, role_name } = req.body;
+        const userExists = await User.findOne({ where: { email: email } });
+
+        if (userExists) {
+            return res.status(400).send(JSON.stringify({ "message": "User already exists!" }));
+        }
+
+        const role = await createRoles(role_name);
+
+        const errors = await returnErrors({ name, password, email, role });
+        if (errors) {
+            return res.status(400).send(JSON.stringify({ "message": errors }));
+        }
+
+        const passwordHash = await encryptPassword(password);
+
+        const newUser = await User.create({
+            user_id: crypto.randomUUID(),
+            name: name,
+            email: email,
+            password: passwordHash,
+            role: role
+        });
+        const userToReturn = await User.findByPk(newUser.user_id, { attributes: ['user_id', 'name', 'email', 'role'] });
+        return res.status(201).send(JSON.stringify(userToReturn));
+
+
     } catch (error) {
-        res.status(500).send(JSON.stringify({ "message": "Error when finding a user" }));
+        console.error(`Error ocurred:`, error);
+        return res.status(500).send(JSON.stringify({ "message": "Error occurred while processing the request" }));
     }
 }
-
 const getUserById = async (req, res) => {
     try {
 
@@ -110,6 +92,18 @@ const findAllUsers = async (req, res) => {
 
 const deleteUserById = async (req, res) => {
     try {
+        const tokenHeader = req.headers["authorization"];
+        if (!tokenHeader) {
+            return res.status(403).send(JSON.stringify({ "message": "Invalid token" }));
+        }
+
+        const authorized = await isAdmin(tokenHeader);
+
+        if (!authorized) {
+            return res.status(403).send(JSON.stringify({ "message": "Not authorized!" }));
+        }
+
+
         const userToDelete = await User.findByPk(req.params.userId);
 
         if (userToDelete === null) {
@@ -139,6 +133,16 @@ const deleteUserById = async (req, res) => {
 
 const updateUserById = async (req, res) => {
     try {
+        const tokenHeader = req.headers["authorization"];
+        if (!tokenHeader) {
+            return res.status(403).send(JSON.stringify({ "message": "Invalid token" }));
+        }
+
+        const authorized = await isAdminAndSameUser(tokenHeader, req.params.userId);
+
+        if (!authorized) {
+            return res.status(403).send(JSON.stringify({ "message": "Not authorized!" }));
+        }
         const userToUpdate = await User.findByPk(req.params.userId);
 
         if (userToUpdate == null) {
@@ -159,11 +163,22 @@ const updateUserById = async (req, res) => {
                 if (emailExists instanceof User && emailExists.user_id !== req.params.userId) {
                     res.status(400).send(JSON.stringify({ "message": "User with this email already exists!" }));
                 } else {
-                    const updatedUser = await User.update({ name: name, email: email, role: role_name }, { where: { user_id: req.params.userId } });
+                    const userRole = await returnRole(tokenHeader);
+
+                    if (userRole == "USER") {
+                        const updatedUser = await User.update({ name: name, email: email }, { where: { user_id: req.params.userId } });
+                        if (updatedUser == 1) {
+                            const user = await User.findByPk(req.params.userId, { attributes: ['user_id', 'name', 'email', 'role'] });
+                            res.status(200).send(JSON.stringify(user));
+                        }
+                    }else{
+                        const updatedUser = await User.update({ name: name, email: email, role: role_name }, { where: { user_id: req.params.userId } });
                     if (updatedUser == 1) {
                         const user = await User.findByPk(req.params.userId, { attributes: ['user_id', 'name', 'email', 'role'] });
                         res.status(200).send(JSON.stringify(user));
                     }
+                    }
+                    
                 }
 
 
