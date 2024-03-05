@@ -196,6 +196,16 @@ const updateUserById = async (req, res) => {
 
 const updatePassword = async (req, res) => {
     try {
+        const tokenHeader = req.headers["authorization"];
+        if (!tokenHeader) {
+            return res.status(403).send(JSON.stringify({ "message": "Invalid token" }));
+        }
+
+        const authorized = await isAdminAndSameUser(tokenHeader, req.params.userId);
+
+        if (!authorized) {
+            return res.status(403).send(JSON.stringify({ "message": "Not authorized!" }));
+        }
         const { password, newPassword, newPasswordRepeat } = req.body;
         const user = await User.findByPk(req.params.userId);
         const options = { newPassword, newPasswordRepeat };
