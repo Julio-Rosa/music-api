@@ -1,12 +1,9 @@
 const express = require("express");
 const db = require("../models/model");
-const Music = db.music;
 const User = db.user;
 const routes = express.Router();
-
-
-const { insertNewUser, getUserById, findAllUsers , deleteUserById, updateUserById, updatePassword} = require('../controllers/userController');
-const {login} = require('../controllers/authController');
+const { insertNewUser, getUserById, findAllUsers, deleteUserById, updateUserById, updatePassword } = require('../controllers/userController');
+const { login } = require('../controllers/authController');
 
 routes.use(express.json());
 

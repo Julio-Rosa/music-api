@@ -10,6 +10,9 @@ const { createRoles } = require('../utils/createRolesUtil');
 const insertNewUser = async (req, res) => {
 
     try {
+        const tokenHeader = req.headers["authorization"];
+        jwt.verify(token, SECRET);
+       
         const { name, email, password, role_name } = req.body;
         const user = await User.findOne({
             where: {
