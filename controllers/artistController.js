@@ -1,38 +1,34 @@
 const { Sequelize, DataTypes, Model } = require('sequelize');
-
 const crypto = require('crypto');
 const db = require("../models/model");
 const Artist = db.artist;
-const { isAdmin} = require('../middlewares/authorizationMiddleware');
+const { isAdmin } = require('../middlewares/authorizationMiddleware');
 
 const insertArtistData = async (req, res) => {
-   
     try {
         const tokenHeader = req.headers["authorization"];
         if (!tokenHeader) {
-            return res.status(403).send(JSON.stringify({ "message": "Invalid token" }));
+            return res.status(403).send({ "message": "Invalid token" });
         }
 
         const authorized = await isAdmin(tokenHeader);
-
         if (authorized === "expired") {
-            
-            return res.status(403).send(JSON.stringify({ "message": "Token expired!" }));
-        }else if (!authorized){
-            return res.status(403).send(JSON.stringify({ "message":"Not authorized!" }));
+            return res.status(403).send({ "message": "Token expired!" });
+        } else if (!authorized) {
+            return res.status(403).send({ "message": "Not authorized!" });
         }
-        
+
         const { name, image_url } = req.body;
         const artist = await Artist.create({
             artist_id: crypto.randomUUID(),
-            name: name,
-            image_url: image_url
+            name,
+            image_url
         });
-        
-        res.status(201).send(JSON.stringify(artist));
+
+        return res.status(201).send(artist);
     } catch (error) {
-        res.status(500).send(JSON.stringify({ "message": "Error when creating a new artist" }));
-        console.error(`Error when creating a new artist`, error);
+        console.error(`Error when creating a new artist:`, error);
+        return res.status(500).send({ "message": "Error when creating a new artist" });
     }
 
 };
@@ -42,15 +38,13 @@ const findAllArtists = async (req, res) => {
     try {
         const artists = await Artist.findAll();
         if (artists.length > 0) {
-            res.status(200).send(JSON.stringify(artists));
+            return res.status(200).send(artists);
         } else {
-            res.status(404).send(JSON.stringify({ "message": "No artists found!" }));
+            return res.status(404).send({ "message": "No artists found!" });
         }
-
-
     } catch (error) {
-        res.status(500).send(JSON.stringify({ "message": "Error when listing all artists!" }));
-        console.error(`Error listing all artists!`, error);
+        console.error(`Error listing all artists:`, error);
+        return res.status(500).send({ "message": "Error when listing all artists!" });
     }
 
 };
@@ -58,83 +52,79 @@ const findAllArtists = async (req, res) => {
 const findArtistById = async (req, res) => {
     try {
         const artist = await Artist.findByPk(req.params.artistId);
-        if (artist == null) {
-            res.status(404).send(JSON.stringify({ "message": "No artist found with this id!" }));
+        if (!artist) {
+            return res.status(404).send({ "message": "No artist found with this id!" });
         } else {
-            res.status(200).send(JSON.stringify(artist));
+            return res.status(200).send(artist);
         }
     } catch (error) {
-        res.status(500).send(JSON.stringify({ "message": "Error when listing  artist by id!" }));
-        console.error(`Error when finding artist with id "${req.params.artistId}"!`, error);
+        console.error(`Error when finding artist with id "${req.params.artistId}":`, error);
+        return res.status(500).send({ "message": "Error when listing artist by id!" });
     }
 };
 const deleteArtistById = async (req, res) => {
 
-
     try {
         const tokenHeader = req.headers["authorization"];
         if (!tokenHeader) {
-            return res.status(403).send(JSON.stringify({ "message": "Invalid token" }));
+            return res.status(403).send({ "message": "Invalid token" });
         }
 
         const authorized = await isAdmin(tokenHeader);
-
         if (authorized === "expired") {
-            
-            return res.status(403).send(JSON.stringify({ "message": "Token expired!" }));
-        }else if (!authorized){
-            return res.status(403).send(JSON.stringify({ "message":"Not authorized!" }));
+            return res.status(403).send({ "message": "Token expired!" });
+        } else if (!authorized) {
+            return res.status(403).send({ "message": "Not authorized!" });
         }
-        const artistToDelete = await Artist.findByPk(req.params.artistId);
-        if (artistToDelete == null) {
-            res.status(404).send(JSON.stringify({ "message": "Artist not found!" }));
-        } else {
-            const deleted = await Artist.destroy({ where: { artist_id: req.params.artistId } });
-            if (deleted == 1) {
 
-                res.status(200).send(JSON.stringify({ "message": "Deleted!" }));
-            }
+        const artistToDelete = await Artist.findByPk(req.params.artistId);
+        if (!artistToDelete) {
+            return res.status(404).send({ "message": "Artist not found!" });
+        }
+
+        const deleted = await Artist.destroy({ where: { artist_id: req.params.artistId } });
+        if (deleted === 1) {
+            return res.status(200).send({ "message": "Deleted!" });
         }
     } catch (error) {
-        res.status(500).send(JSON.stringify({ "message": "Error when deleting  artist by id!" }));
-        console.error(`Error when deleting artist with id "${req.params.artistId}!"`, error);
+        console.error(`Error when deleting artist with id "${req.params.artistId}":`, error);
+        return res.status(500).send({ "message": "Error when deleting artist by id!" });
     }
+
 };
 const updateArtistById = async (req, res) => {
-
     try {
         const tokenHeader = req.headers["authorization"];
         if (!tokenHeader) {
-            return res.status(403).send(JSON.stringify({ "message": "Invalid token" }));
+            return res.status(403).send({ "message": "Invalid token" });
         }
 
+        const authorized = await isAdmin(tokenHeader);
         if (authorized === "expired") {
-            
-            return res.status(403).send(JSON.stringify({ "message": "Token expired!" }));
-        }else if (!authorized){
-            return res.status(403).send(JSON.stringify({ "message":"Not authorized!" }));
+            return res.status(403).send({ "message": "Token expired!" });
+        } else if (!authorized) {
+            return res.status(403).send({ "message": "Not authorized!" });
         }
 
-        if (!authorized) {
-            return res.status(403).send(JSON.stringify({ "message": "Not authorized!" }));
-        }
         const { name, image_url } = req.body;
         const artistToUpdate = await Artist.findByPk(req.params.artistId);
-        if (artistToUpdate == null) {
-            res.status(404).send(JSON.stringify({ "message": "Artist not found!" }));
-        } else {
-            await Artist.update({ name: name, image_url: image_url }, { where: { artist_id: req.params.artistId } });
-            const updatedArtist = await Artist.findByPk(req.params.artistId);
-
-            res.status(200).send(JSON.stringify(updatedArtist));
+        if (!artistToUpdate) {
+            return res.status(404).send({ "message": "Artist not found!" });
         }
 
-
+        await Artist.update(
+            { name, image_url },
+            { where: { artist_id: req.params.artistId } }
+        );
+        const updatedArtist = await Artist.findByPk(req.params.artistId);
+        return res.status(200).send(updatedArtist);
     } catch (error) {
-        res.status(500).send(JSON.stringify({ "message": "Error when updating artist!" }));
-        console.error(`Error when updating artist with id "${req.params.artistId}"`, error)
+        console.error(`Error when updating artist with id "${req.params.artistId}":`, error);
+        return res.status(500).send({ "message": "Error when updating artist!" });
     }
-};
+
+}
+
 module.exports = {
     insertArtistData,
     findAllArtists,
