@@ -2,159 +2,187 @@ const { Sequelize, DataTypes, Model } = require('sequelize');
 const crypto = require('crypto');
 const db = require("../models/model");
 const Album = db.album;
-const { isAdmin} = require('../middlewares/authorizationMiddleware');
-const insertAlbumData =  async (req, res) => {
-   
+const { isAdmin } = require('../middlewares/authorizationMiddleware');
+
+const insertAlbumData = async (req, res) => {
     try {
+        // Verify if token is present in the headers
         const tokenHeader = req.headers["authorization"];
         if (!tokenHeader) {
-            return res.status(403).send(JSON.stringify({ "message": "Invalid token" }));
+            return res.status(403).send({ "message": "Invalid token!" });
         }
-
+        // Check if user is authorized (admin)
         const authorized = await isAdmin(tokenHeader);
-       
 
+        // Handle authorization status
         if (authorized === "expired") {
-            
-            return res.status(403).send(JSON.stringify({ "message": "Token expired!" }));
-        }else if (!authorized){
-            return res.status(403).send(JSON.stringify({ "message":"Not authorized!" }));
+            return res.status(403).send({ "message": "Token expired!" });
+        } else if (!authorized) {
+            return res.status(403).send({ "message": "Not authorized!" });
         }
 
-        const {name,artist_id,image_url} = req.body;
+        // Create a new album
+        const { name, artist_id, image_url } = req.body;
         const album = await Album.create({
-            album_id:crypto.randomUUID(),
-            name: name,
-            artist_id: artist_id,
-            image_url:image_url
+            album_id: crypto.randomUUID(),
+            name,
+            artist_id,
+            image_url
         });
-        res.status(201).send(JSON.stringify(album));
+        // Send success response
+        res.status(201).send(album);
     } catch (error) {
-       
-        res.status(500).send(JSON.stringify({ "message": "Error when creating a new album!" }));
-        console.error(`Error when creating new album`, error.message);
+        console.error(`Error when creating new album:`, error.message);
+        res.status(500).send({ "message": "Error when creating a new album!" });
     }
-};
 
+}
 const findAllAlbums = async (req, res) => {
     try {
+        // Fetch all albums
         const albums = await Album.findAll();
+
+        // Check if albums are found
         if (albums.length > 0) {
-            res.status(200).send(JSON.stringify(albums));
+            // Send albums if found
+            res.status(200).send(albums);
         } else {
-            res.status(404).send(JSON.stringify({ "message": "No albums found!" }));
+            // Send 404 if no albums found
+            res.status(404).send({ "message": "No albums found!" });
         }
     } catch (error) {
-        res.status(500).send(JSON.stringify({ "message": "Error when  listing all albums!" }));
-        console.error(`Error listing all albums`, error);
+        // Handle errors
+        console.error(`Error listing all albums:`, error.message);
+        res.status(500).send({ "message": "Error when listing all albums!" });
     }
 
 };
-
 const findAlbumById = async (req, res) => {
     try {
+        // Find album by ID
         const album = await Album.findOne({
             where: {
                 album_id: req.params.albumId
             }
         });
-       
+
+        // Check if album exists
         if (album !== null) {
-            res.status(200).send(JSON.stringify(album));
-        }else{
-            res.status(404).send(JSON.stringify({ "message": "Album not found!" }));
+            // Send album if found
+            res.status(200).send(album);
+        } else {
+            // Send 404 if album not found
+            res.status(404).send({ "message": "Album not found!" });
         }
     } catch (error) {
-        res.status(500).send(JSON.stringify({ "message": "Error when listing album by id!" }));
-        console.error(`Error when listing album with id ${req.params.albumId}`, error);
+        // Handle errors
+        console.error(`Error when listing album by id`, error.message);
+        res.status(500).send({ "message": "Error when listing album by id!" });
     }
 }
-
-
 const deleteAlbumById = async (req, res) => {
-     
-     
-        try {
-            const tokenHeader = req.headers["authorization"];
-            if (!tokenHeader) {
-                return res.status(403).send(JSON.stringify({ "message": "Invalid token" }));
-            }
-    
-            const authorized = await isAdmin(tokenHeader);
-    
-            if (authorized === "expired") {
-            
-                return res.status(403).send(JSON.stringify({ "message": "Token expired!" }));
-            }else if (!authorized){
-                return res.status(403).send(JSON.stringify({ "message":"Not authorized!" }));
-            }
-            const album = await Album.findByPk(req.params.albumId);
-           
-            if(album == null){
-               
-                res.status(404).send(JSON.stringify({ "message": "Album Not Found!" }));
-            }else{
-                const deleted = await Album.destroy({
-                    where: {
-                        album_id: req.params.albumId
-                    }
-                });
-                if (deleted == 1) {
-                    res.status(200).send(JSON.stringify({ "message": "Deleted!" }));
-                } 
-            }
-            
-        } catch (error) {
-            res.status(500).send(JSON.stringify({ "message": "An error occurred while deleting!" }));
-            console.error(`Error while deleting album with id "${req.params.albumId}"`, error);
+    try {
+        // Verify if token is present in the headers
+        const tokenHeader = req.headers["authorization"];
+        if (!tokenHeader) {
+            return res.status(403).send({ "message": "Invalid token" });
         }
-     
-};
 
-const  updateAlbumById = async (req, res)=>{
-  
-   
-        try {
-            const tokenHeader = req.headers["authorization"];
-            if (!tokenHeader) {
-                return res.status(403).send(JSON.stringify({ "message": "Invalid token" }));
-            }
-    
-            const authorized = await isAdmin(tokenHeader);
-    
-            if (authorized === "expired") {
-            
-                return res.status(403).send(JSON.stringify({ "message": "Token expired!" }));
-            }else if (!authorized){
-                return res.status(403).send(JSON.stringify({ "message":"Not authorized!" }));
-            }
-            const albumToUpdate = await Album.findByPk(req.params.albumId);
-            if(albumToUpdate == null){
-                res.status(404).send(JSON.stringify({ "message": "Album Not Found!" }));
-            }else{
-                const {name,image_url,artist_id} = req.body;
+        // Check if user is authorized (admin)
+        const authorized = await isAdmin(tokenHeader);
 
-                const album = await Album.update({name:name,image_url:image_url,artist_id:artist_id},
-                    {
-                        where:{
-                            album_id:req.params.albumId
-                            
-                        }
-                    });
-                    if(album[0] === 1){
-                        const updatedAlbum = await Album.findByPk(req.params.albumId);
-                        res.status(200).send(JSON.stringify(updatedAlbum));;
-                    }
-
-            }
-
-           
-            
-        } catch (error) {
-            res.status(500).send(JSON.stringify({ "message": "An error occurred while updating" }));
-            console.error(`Error when updating album with id "${req.params.albumId}"`, error);
+        // Handle authorization status
+        if (authorized === "expired") {
+            return res.status(403).send({ "message": "Token expired!" });
+        } else if (!authorized) {
+            return res.status(403).send({ "message": "Not authorized!" });
         }
+
+        // Find album by ID
+        const album = await Album.findByPk(req.params.albumId);
+
+        // Check if album exists
+        if (!album) {
+            return res.status(404).send({ "message": "Album not found!" });
+        }
+
+        // Delete the album
+        const deleted = await Album.destroy({
+            where: {
+                album_id: req.params.albumId
+            }
+        });
+
+        // Check if album was successfully deleted
+        if (deleted === 1) {
+            return res.status(200).send({ "message": "Deleted!" });
+        } else {
+            return res.status(500).send({ "message": "An error occurred while deleting!" });
+        }
+
+    } catch (error) {
+        // Handle errors
+        console.error(`Error when deleting album by id":`, error.message);
+        res.status(500).send({ "message": "An error occurred while deleting!" });
     }
+
+};
+const updateAlbumById = async (req, res) => {
+
+    try {
+        // Verify if token is present in the headers
+        const tokenHeader = req.headers["authorization"];
+        if (!tokenHeader) {
+            return res.status(403).send({ "message": "Invalid token" });
+        }
+
+        // Check if user is authorized (admin)
+        const authorized = await isAdmin(tokenHeader);
+
+        // Handle authorization status
+        if (authorized === "expired") {
+            return res.status(403).send({ "message": "Token expired!" });
+        } else if (!authorized) {
+            return res.status(403).send({ "message": "Not authorized!" });
+        }
+
+        // Find album by ID
+        const albumToUpdate = await Album.findByPk(req.params.albumId);
+
+        // Check if album exists
+        if (!albumToUpdate) {
+            return res.status(404).send({ "message": "Album not found!" });
+        }
+
+        // Extract necessary fields from the request body
+        const { name, image_url, artist_id } = req.body;
+
+        // Update the album
+        const [updatedRowsCount] = await Album.update(
+            { name, image_url, artist_id },
+            {
+                where: {
+                    album_id: req.params.albumId
+                }
+            }
+        );
+
+        // Check if the album was successfully updated
+        if (updatedRowsCount === 1) {
+            // Fetch the updated album
+            const updatedAlbum = await Album.findByPk(req.params.albumId);
+            return res.status(200).send(updatedAlbum);
+        } else {
+            return res.status(500).send({ "message": "An error occurred while updating" });
+        }
+
+    } catch (error) {
+        // Handle errors
+        console.error(`Error when updating album with by id":`, error.message);
+        res.status(500).send({ "message": "An error occurred while updating" });
+    }
+
+};
 
 
 module.exports = {
