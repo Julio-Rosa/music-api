@@ -2,6 +2,7 @@ const { Sequelize, DataTypes, Model } = require('sequelize');
 const crypto = require('crypto');
 const db = require("../models/model");
 const Category = db.category;
+const { isAdmin} = require('../middlewares/authorizationMiddleware');
 
 
 const insertCategoryData = async (req, res) => {
@@ -47,6 +48,19 @@ const findAllCategories = async (req, res) => {
 
 const deleteCategorieById = async (req, res) => {
     try {
+        const tokenHeader = req.headers["authorization"];
+        if (!tokenHeader) {
+            return res.status(403).send(JSON.stringify({ "message": "Invalid token" }));
+        }
+
+        const authorized = await isAdmin(tokenHeader);
+
+        if (authorized === "expired") {
+            
+            return res.status(403).send(JSON.stringify({ "message": "Token expired!" }));
+        }else if (!authorized){
+            return res.status(403).send(JSON.stringify({ "message":"Not authorized!" }));
+        }
         const categoryToDelete = await Category.findByPk(req.params.categoryId);
 
         if (categoryToDelete === null) {
@@ -84,6 +98,19 @@ const findCategoryById = async (req, res) =>{
 
 const updateCategoryById = async (req, res) => {
     try {
+        const tokenHeader = req.headers["authorization"];
+        if (!tokenHeader) {
+            return res.status(403).send(JSON.stringify({ "message": "Invalid token" }));
+        }
+
+        const authorized = await isAdmin(tokenHeader);
+
+        if (authorized === "expired") {
+            
+            return res.status(403).send(JSON.stringify({ "message": "Token expired!" }));
+        }else if (!authorized){
+            return res.status(403).send(JSON.stringify({ "message":"Not authorized!" }));
+        }
         const {name} = req.body;
         const category = await Category.findByPk(req.params.categoryId);
         if (category == null) {

@@ -3,17 +3,32 @@ const { Sequelize, DataTypes, Model } = require('sequelize');
 const crypto = require('crypto');
 const db = require("../models/model");
 const Artist = db.artist;
-
+const { isAdmin} = require('../middlewares/authorizationMiddleware');
 
 const insertArtistData = async (req, res) => {
-    const { name, image_url } = req.body;
+   
     try {
+        const tokenHeader = req.headers["authorization"];
+        if (!tokenHeader) {
+            return res.status(403).send(JSON.stringify({ "message": "Invalid token" }));
+        }
+
+        const authorized = await isAdmin(tokenHeader);
+
+        if (authorized === "expired") {
+            
+            return res.status(403).send(JSON.stringify({ "message": "Token expired!" }));
+        }else if (!authorized){
+            return res.status(403).send(JSON.stringify({ "message":"Not authorized!" }));
+        }
+        
+        const { name, image_url } = req.body;
         const artist = await Artist.create({
             artist_id: crypto.randomUUID(),
             name: name,
             image_url: image_url
         });
-        console.log(artist);
+        
         res.status(201).send(JSON.stringify(artist));
     } catch (error) {
         res.status(500).send(JSON.stringify({ "message": "Error when creating a new artist" }));
@@ -57,6 +72,19 @@ const deleteArtistById = async (req, res) => {
 
 
     try {
+        const tokenHeader = req.headers["authorization"];
+        if (!tokenHeader) {
+            return res.status(403).send(JSON.stringify({ "message": "Invalid token" }));
+        }
+
+        const authorized = await isAdmin(tokenHeader);
+
+        if (authorized === "expired") {
+            
+            return res.status(403).send(JSON.stringify({ "message": "Token expired!" }));
+        }else if (!authorized){
+            return res.status(403).send(JSON.stringify({ "message":"Not authorized!" }));
+        }
         const artistToDelete = await Artist.findByPk(req.params.artistId);
         if (artistToDelete == null) {
             res.status(404).send(JSON.stringify({ "message": "Artist not found!" }));
@@ -75,6 +103,21 @@ const deleteArtistById = async (req, res) => {
 const updateArtistById = async (req, res) => {
 
     try {
+        const tokenHeader = req.headers["authorization"];
+        if (!tokenHeader) {
+            return res.status(403).send(JSON.stringify({ "message": "Invalid token" }));
+        }
+
+        if (authorized === "expired") {
+            
+            return res.status(403).send(JSON.stringify({ "message": "Token expired!" }));
+        }else if (!authorized){
+            return res.status(403).send(JSON.stringify({ "message":"Not authorized!" }));
+        }
+
+        if (!authorized) {
+            return res.status(403).send(JSON.stringify({ "message": "Not authorized!" }));
+        }
         const { name, image_url } = req.body;
         const artistToUpdate = await Artist.findByPk(req.params.artistId);
         if (artistToUpdate == null) {

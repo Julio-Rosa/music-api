@@ -2,10 +2,26 @@ const { Sequelize, DataTypes, Model } = require('sequelize');
 const crypto = require('crypto');
 const db = require("../models/model");
 const Album = db.album;
-
+const { isAdmin} = require('../middlewares/authorizationMiddleware');
 const insertAlbumData =  async (req, res) => {
-    const {name,artist_id,image_url} = req.body;
+   
     try {
+        const tokenHeader = req.headers["authorization"];
+        if (!tokenHeader) {
+            return res.status(403).send(JSON.stringify({ "message": "Invalid token" }));
+        }
+
+        const authorized = await isAdmin(tokenHeader);
+       
+
+        if (authorized === "expired") {
+            
+            return res.status(403).send(JSON.stringify({ "message": "Token expired!" }));
+        }else if (!authorized){
+            return res.status(403).send(JSON.stringify({ "message":"Not authorized!" }));
+        }
+
+        const {name,artist_id,image_url} = req.body;
         const album = await Album.create({
             album_id:crypto.randomUUID(),
             name: name,
@@ -14,8 +30,9 @@ const insertAlbumData =  async (req, res) => {
         });
         res.status(201).send(JSON.stringify(album));
     } catch (error) {
+       
         res.status(500).send(JSON.stringify({ "message": "Error when creating a new album!" }));
-        console.error(`Error when creating new album`, error);
+        console.error(`Error when creating new album`, error.message);
     }
 };
 
@@ -58,6 +75,19 @@ const deleteAlbumById = async (req, res) => {
      
      
         try {
+            const tokenHeader = req.headers["authorization"];
+            if (!tokenHeader) {
+                return res.status(403).send(JSON.stringify({ "message": "Invalid token" }));
+            }
+    
+            const authorized = await isAdmin(tokenHeader);
+    
+            if (authorized === "expired") {
+            
+                return res.status(403).send(JSON.stringify({ "message": "Token expired!" }));
+            }else if (!authorized){
+                return res.status(403).send(JSON.stringify({ "message":"Not authorized!" }));
+            }
             const album = await Album.findByPk(req.params.albumId);
            
             if(album == null){
@@ -85,6 +115,19 @@ const  updateAlbumById = async (req, res)=>{
   
    
         try {
+            const tokenHeader = req.headers["authorization"];
+            if (!tokenHeader) {
+                return res.status(403).send(JSON.stringify({ "message": "Invalid token" }));
+            }
+    
+            const authorized = await isAdmin(tokenHeader);
+    
+            if (authorized === "expired") {
+            
+                return res.status(403).send(JSON.stringify({ "message": "Token expired!" }));
+            }else if (!authorized){
+                return res.status(403).send(JSON.stringify({ "message":"Not authorized!" }));
+            }
             const albumToUpdate = await Album.findByPk(req.params.albumId);
             if(albumToUpdate == null){
                 res.status(404).send(JSON.stringify({ "message": "Album Not Found!" }));

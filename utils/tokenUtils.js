@@ -10,16 +10,23 @@ async function createToken(secret, user) {
 };
 
 async function verifyToken(token, secret) {
-    try {
+   
 
-        const decoded = jwt.verify(token, secret);
-    
-        return decoded;
+         try {
+            const decoded = await jwt.verify(token, secret);
+            return decoded;
+         } catch (error) {
+            if (error.name === 'TokenExpiredError') {
+                    return "expired";
+            } else {
+                console.error("Error verifying token, ", error.message);
+            }
+                
+          
+         }
+       
 
-    } catch (error) {
-        console.error(`Error ocurred:`, error);
-
-    }
+  
 }
 
 

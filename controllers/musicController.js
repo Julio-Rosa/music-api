@@ -3,12 +3,26 @@ const db = require("../models/model");
 const crypto = require('crypto');
 const { returnErrors } = require('../utils/errorsUtil');
 const Music = db.music;
+const { isAdmin } = require('../middlewares/authorizationMiddleware');
 
 //------------------------- INSERT NEW MUSIC -----------------------------
 const insertMusicData = async (req, res) => {
 
 
     try {
+        const tokenHeader = req.headers["authorization"];
+        if (!tokenHeader) {
+            return res.status(403).send(JSON.stringify({ "message": "Invalid token" }));
+        }
+
+        const authorized = await isAdmin(tokenHeader);
+
+        if (authorized === "expired") {
+            
+            return res.status(403).send(JSON.stringify({ "message": "Token expired!" }));
+        }else if (!authorized){
+            return res.status(403).send(JSON.stringify({ "message":"Not authorized!" }));
+        }
         const {release_date, name, album_id, artist_id, category_id} = req.body;
         const options = { release_date };
         const errors = await returnErrors(options);
@@ -117,6 +131,19 @@ const findAllMusicsByAlbumId = async (req, res) =>{
 // ------------------------------------ DELETE MUSIC BY ID ----------------------------------------
 const deleteMusicBydId = async (req, res) =>{
     try {
+        const tokenHeader = req.headers["authorization"];
+        if (!tokenHeader) {
+            return res.status(403).send(JSON.stringify({ "message": "Invalid token" }));
+        }
+
+        const authorized = await isAdmin(tokenHeader);
+     
+        if (authorized === "expired") {
+            
+            return res.status(403).send(JSON.stringify({ "message": "Token expired!" }));
+        }else if (!authorized){
+            return res.status(403).send(JSON.stringify({ "message":"Not authorized!" }));
+        }
         const musicToDelete = await Music.findByPk(req.params.musicId);
 
         if (musicToDelete === null) {
@@ -150,6 +177,19 @@ const deleteMusicBydId = async (req, res) =>{
 //--------------------------------- UPDATE MUSIC BY ID -----------------------
 const updateMusicById = async (req, res) =>{
     try {
+        const tokenHeader = req.headers["authorization"];
+        if (!tokenHeader) {
+            return res.status(403).send(JSON.stringify({ "message": "Invalid token" }));
+        }
+
+        const authorized = await isAdmin(tokenHeader);
+
+        if (authorized === "expired") {
+            
+            return res.status(403).send(JSON.stringify({ "message": "Token expired!" }));
+        }else if (!authorized){
+            return res.status(403).send(JSON.stringify({ "message":"Not authorized!" }));
+        }
         const musicToUpdate = await Music.findByPk(req.params.musicId);
 
         if (musicToUpdate === null) {

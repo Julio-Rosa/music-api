@@ -19,10 +19,12 @@ const insertNewUser = async (req, res) => {
 
         const authorized = await isAdmin(tokenHeader);
 
-        if (!authorized) {
-            return res.status(403).send(JSON.stringify({ "message": "Not authorized!" }));
+        if (authorized === "expired") {
+            
+            return res.status(403).send(JSON.stringify({ "message": "Token expired!" }));
+        }else if (!authorized){
+            return res.status(403).send(JSON.stringify({ "message":"Not authorized!" }));
         }
-
         const { name, email, password, role_name } = req.body;
         const userExists = await User.findOne({ where: { email: email } });
 
@@ -99,8 +101,11 @@ const deleteUserById = async (req, res) => {
 
         const authorized = await isAdmin(tokenHeader);
 
-        if (!authorized) {
-            return res.status(403).send(JSON.stringify({ "message": "Not authorized!" }));
+        if (authorized === "expired") {
+            
+            return res.status(403).send(JSON.stringify({ "message": "Token expired!" }));
+        }else if (!authorized){
+            return res.status(403).send(JSON.stringify({ "message":"Not authorized!" }));
         }
 
 
@@ -140,8 +145,11 @@ const updateUserById = async (req, res) => {
 
         const authorized = await isAdminAndSameUser(tokenHeader, req.params.userId);
 
-        if (!authorized) {
-            return res.status(403).send(JSON.stringify({ "message": "Not authorized!" }));
+        if (authorized === "expired") {
+            
+            return res.status(403).send(JSON.stringify({ "message": "Token expired!" }));
+        }else if (!authorized){
+            return res.status(403).send(JSON.stringify({ "message":"Not authorized!" }));
         }
         const userToUpdate = await User.findByPk(req.params.userId);
 
@@ -203,8 +211,11 @@ const updatePassword = async (req, res) => {
 
         const authorized = await isAdminAndSameUser(tokenHeader, req.params.userId);
 
-        if (!authorized) {
-            return res.status(403).send(JSON.stringify({ "message": "Not authorized!" }));
+        if (authorized === "expired") {
+            
+            return res.status(403).send(JSON.stringify({ "message": "Token expired!" }));
+        }else if (!authorized){
+            return res.status(403).send(JSON.stringify({ "message":"Not authorized!" }));
         }
         const { password, newPassword, newPasswordRepeat } = req.body;
         const user = await User.findByPk(req.params.userId);
