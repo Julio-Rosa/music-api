@@ -1,13 +1,13 @@
 
 const express = require("express");
-const userRoutes = require('./routes/userRoutes');
-const authRoutes = require('./routes/authRoutes');
-const musicRoutes = require('./routes/musicRoutes');
-const categoryRoutes = require('./routes/categoryRoutes');
-const artistRoutes = require('./routes/artistRoutes');
-const albumRoutes = require('./routes/albumRoutes');
+const userRoutes = require('./src/routes/userRoutes');
+const authRoutes = require('./src/routes/authRoutes');
+const musicRoutes = require('./src/routes/musicRoutes');
+const categoryRoutes = require('./src/routes/categoryRoutes');
+const artistRoutes = require('./src/routes/artistRoutes');
+const albumRoutes = require('./src/routes/albumRoutes');
 const app = express();
-const db = require("./models/model");
+const db = require("./src/models/model");
 require('dotenv/config');
 
 
