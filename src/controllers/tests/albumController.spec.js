@@ -1,4 +1,4 @@
-const { insertAlbumData, findAllAlbums } = require('../albumController');
+const { insertAlbumData, findAllAlbums, findAlbumById } = require('../albumController');
 const db = require('../../models/model');
 const { isAdmin } = require('../../middlewares/authorizationMiddleware');
 const Album = db.album;
@@ -13,7 +13,7 @@ jest.mock('../../middlewares/authorizationMiddleware.js', () => ({
 }));
 
 
-describe('insertAlbumData function', () => {
+describe('insertAlbumData', () => {
     let req, res, next;
 
     beforeEach(() => {
@@ -86,18 +86,6 @@ describe('insertAlbumData function', () => {
         expect(res.status).toHaveBeenCalledWith(500);
         expect(res.send).toHaveBeenCalledWith({ message: 'Error when creating a new album!' });
     });
-
-
-
-
-
-
-
-
-
-
-
-
 });
 
 describe('findAllAlbums', () => {
@@ -137,15 +125,68 @@ describe('findAllAlbums', () => {
         const errorMessage = 'Internal Server Error';
         db.album.findAll = jest.fn().mockRejectedValue(new Error(errorMessage));
 
-        await findAllAlbums(req,res);
-         expect(Album.findAll).toHaveBeenCalledTimes(1);
-         expect(console.error).toHaveBeenCalledWith(`Error listing all albums:`, errorMessage);
-         expect(res.status).toHaveBeenCalledWith(500);
-         expect(res.send).toHaveBeenCalledWith({"message":"Error when listing all albums!"});
+        await findAllAlbums(req, res);
+        expect(Album.findAll).toHaveBeenCalledTimes(1);
+        expect(console.error).toHaveBeenCalledWith(`Error listing all albums:`, errorMessage);
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.send).toHaveBeenCalledWith({ "message": "Error when listing all albums!" });
 
 
     });
 });
+
+describe('findAlbumById', () => {
+    beforeEach(() => {
+        req = { params: { albumId: 1 } };
+        res = {
+            status: jest.fn(() => res),
+            send: jest.fn(),
+        };
+    });
+
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+
+
+    it('should return the album when found', async () => {
+        const mockAlbum = { album_id: 1, name: 'Test Album' };
+        db.album.findOne = jest.fn().mockResolvedValue(mockAlbum);
+
+        await findAlbumById(req, res);
+
+        expect(Album.findOne).toHaveBeenCalledWith({ where: { album_id: req.params.albumId } });
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.send).toHaveBeenCalledWith(mockAlbum);
+    });
+
+    it('should return 404 when album not found', async () => {
+        db.album.findOne = jest.fn().mockResolvedValueOnce(null);
+
+        await findAlbumById(req, res);
+
+        expect(Album.findOne).toHaveBeenCalledWith({ where: { album_id: req.params.albumId } });
+        expect(res.status).toHaveBeenCalledWith(404);
+        expect(res.send).toHaveBeenCalledWith({ message: 'Album not found!' });
+
+    });
+    it('should return 500 on error', async () => {
+        const errorMessage = 'Internal Server Error';
+        db.album.findOne = jest.fn().mockRejectedValueOnce(new Error(errorMessage));
+
+        await findAlbumById(req, res);
+
+        expect(Album.findOne).toHaveBeenCalledWith({ where: { album_id: req.params.albumId } });
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.send).toHaveBeenCalledWith({ message: 'Error when listing album by id!' });
+        expect(console.error).toHaveBeenCalledWith(`Error when listing album by id`, errorMessage);
+    });
+
+
+});
+
+
+
 
 
 

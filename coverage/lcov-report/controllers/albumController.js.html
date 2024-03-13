@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">32.46% </span>
+                <span class="strong">46.75% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>25/77</span>
+                <span class='fraction'>36/77</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">20% </span>
+                <span class="strong">30% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>6/30</span>
+                <span class='fraction'>9/30</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">20% </span>
+                <span class="strong">60% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/5</span>
+                <span class='fraction'>3/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">32.46% </span>
+                <span class="strong">46.75% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>25/77</span>
+                <span class='fraction'>36/77</span>
             </div>
         
             
@@ -296,38 +296,38 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -488,40 +488,40 @@ const insertAlbumData = async (req, res) =&gt; {
     }
 &nbsp;
 }
-const findAllAlbums = <span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
-<span class="cstat-no" title="statement not covered" >    try {</span>
+const findAllAlbums = async (req, res) =&gt; {
+    try {
         // Fetch all albums
-        const albums = <span class="cstat-no" title="statement not covered" >await Album.findAll();</span>
+        const albums = await Album.findAll();
 &nbsp;
         // Check if albums are found
-<span class="cstat-no" title="statement not covered" >        if (albums.length &gt; 0) {</span>
+        if (albums.length &gt; 0) {
             // Send albums if found
-<span class="cstat-no" title="statement not covered" >            res.status(200).send(albums);</span>
+            res.status(200).send(albums);
         } else {
             // Send 404 if no albums found
-<span class="cstat-no" title="statement not covered" >            res.status(404).send({ "message": "No albums found!" });</span>
+            res.status(404).send({ "message": "No albums found!" });
         }
     } catch (error) {
         // Handle errors
-<span class="cstat-no" title="statement not covered" >        console.error(`Error listing all albums:`, error.message);</span>
-<span class="cstat-no" title="statement not covered" >        res.status(500).send({ "message": "Error when listing all albums!" });</span>
+        console.error(`Error listing all albums:`, error.message);
+        res.status(500).send({ "message": "Error when listing all albums!" });
     }
 &nbsp;
 };
-const findAlbumById = <span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
-<span class="cstat-no" title="statement not covered" >    try {</span>
+const findAlbumById = async (req, res) =&gt; {
+    try {
         // Find album by ID
-        const album = <span class="cstat-no" title="statement not covered" >await Album.findOne({</span>
+        const album = await Album.findOne({
             where: {
                 album_id: req.params.albumId
             }
         });
 &nbsp;
         // Check if album exists
-<span class="cstat-no" title="statement not covered" >        if (album !== null) {</span>
+        if (album !== null) {
             // Send album if found
-<span class="cstat-no" title="statement not covered" >            res.status(200).send(album);</span>
-        } else {
+            res.status(200).send(album);
+        } else <span class="missing-if-branch" title="else path not taken" >E</span>{
             // Send 404 if album not found
 <span class="cstat-no" title="statement not covered" >            res.status(404).send({ "message": "Album not found!" });</span>
         }
@@ -649,7 +649,7 @@ module.exports = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2024-03-10T00:59:43.522Z
+                at 2024-03-13T15:37:43.663Z
             </div>
         <script src="../prettify.js"></script>
         <script>
