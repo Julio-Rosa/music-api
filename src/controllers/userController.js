@@ -9,7 +9,6 @@ const { createRoles } = require('../utils/createRolesUtil');
 const { isAdmin, isAdminAndSameUser, returnRole } = require('../middlewares/authorizationMiddleware');
 require('dotenv/config');
 
-
 const insertNewUser = async (req, res) => {
     try {
         const tokenHeader = req.headers["authorization"];
@@ -237,6 +236,8 @@ const updatePassword = async (req, res) => {
 
 }
 
+
+
 module.exports = {
     insertNewUser,
     getUserById,
@@ -244,6 +245,7 @@ module.exports = {
     deleteUserById,
     updateUserById,
     updatePassword,
+   
 
 
 }

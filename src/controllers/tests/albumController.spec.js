@@ -1,4 +1,4 @@
-const { insertAlbumData, findAllAlbums, findAlbumById, deleteAlbumById } = require('../albumController');
+const { insertAlbumData, findAllAlbums, findAlbumById, deleteAlbumById, updateAlbumById } = require('../albumController');
 const db = require('../../models/model');
 const { isAdmin } = require('../../middlewares/authorizationMiddleware');
 const Album = db.album;
@@ -7,7 +7,6 @@ jest.mock('../../middlewares/authorizationMiddleware.js', () => ({
     isAdmin: jest.fn(),
 
 }));
-
 
 describe('insertAlbumData', () => {
     let req, res, next;
@@ -83,7 +82,6 @@ describe('insertAlbumData', () => {
         expect(res.send).toHaveBeenCalledWith({ message: 'Error when creating a new album!' });
     });
 });
-
 describe('findAllAlbums', () => {
 
     beforeEach(() => {
@@ -130,7 +128,6 @@ describe('findAllAlbums', () => {
 
     });
 });
-
 describe('findAlbumById', () => {
     beforeEach(() => {
         req = { params: { albumId: 1 } };
@@ -272,7 +269,61 @@ describe('deleteAlbumById', () => {
 
 });
 
+describe('updateAlbumById', () => {
 
+    beforeEach(() => {
+
+
+        req = {
+            params: { albumId: 1 },
+            headers: { authorization: 'valid-token' },
+            body: { name: 'New Album Name', image_url: 'new_image.jpg', artist_id: 2 }
+        }
+
+        res = {
+            status: jest.fn(() => res),
+            send: jest.fn(),
+        };
+    });
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('should update album when authorized admin, album exists, and update is successful', async () => {
+
+        isAdmin.mockResolvedValueOnce(true); // User is authorized
+        db.album.findByPk = jest.fn().mockResolvedValueOnce({ album_id: 1, name: 'Old Album Name', image_url: 'old_image.jpg', artist_id: 1 }); // Album found
+        db.album.update = jest.fn().mockResolvedValueOnce([1]); // Update successful
+        db.album.findByPk = jest.fn().mockResolvedValueOnce({ album_id: 1, name: 'New Album Name', image_url: 'new_image.jpg', artist_id: 2 }); // Updated album
+
+        await updateAlbumById(req, res);
+
+        expect(isAdmin).toHaveBeenCalledWith('valid-token');
+        expect(db.album.findByPk).toHaveBeenCalledWith(req.params.albumId);
+        expect(db.album.update).toHaveBeenCalledWith(
+            { name: 'New Album Name', image_url: 'new_image.jpg', artist_id: 2 },
+            { where: { album_id: req.params.albumId } }
+        );
+        expect(db.album.findByPk).toHaveBeenCalledWith(req.params.albumId);
+        expect(res.status).toHaveBeenCalledWith(200);
+
+    });
+    it('should return 403 if token is missing', async () => {
+        const req = {
+            params: { albumId: 1 },
+            headers: {},
+            body: { name: 'New Album Name', image_url: 'new_image.jpg', artist_id: 2 }
+        };
+
+        await updateAlbumById(req, res);
+
+        expect(isAdmin).not.toHaveBeenCalled(); // isAdmin shouldn't be called
+        expect(db.album.findByPk).not.toHaveBeenCalled(); // findByPk shouldn't be called
+        expect(db.album.update).not.toHaveBeenCalled(); // update shouldn't be called
+        expect(res.status).toHaveBeenCalledWith(403);
+        expect(res.send).toHaveBeenCalledWith({ message: 'Invalid token' });
+    });
+});
 
 
 
