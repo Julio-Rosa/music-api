@@ -1,11 +1,7 @@
-const { insertAlbumData, findAllAlbums, findAlbumById } = require('../albumController');
+const { insertAlbumData, findAllAlbums, findAlbumById, deleteAlbumById } = require('../albumController');
 const db = require('../../models/model');
 const { isAdmin } = require('../../middlewares/authorizationMiddleware');
 const Album = db.album;
-
-
-
-
 
 jest.mock('../../middlewares/authorizationMiddleware.js', () => ({
     isAdmin: jest.fn(),
@@ -155,7 +151,7 @@ describe('findAlbumById', () => {
 
         await findAlbumById(req, res);
 
-        expect(Album.findOne).toHaveBeenCalledWith({ where: { album_id: req.params.albumId } });
+        expect(db.album.findOne).toHaveBeenCalledWith({ where: { album_id: req.params.albumId } });
         expect(res.status).toHaveBeenCalledWith(200);
         expect(res.send).toHaveBeenCalledWith(mockAlbum);
     });
@@ -165,7 +161,7 @@ describe('findAlbumById', () => {
 
         await findAlbumById(req, res);
 
-        expect(Album.findOne).toHaveBeenCalledWith({ where: { album_id: req.params.albumId } });
+        expect(db.album.findOne).toHaveBeenCalledWith({ where: { album_id: req.params.albumId } });
         expect(res.status).toHaveBeenCalledWith(404);
         expect(res.send).toHaveBeenCalledWith({ message: 'Album not found!' });
 
@@ -176,7 +172,7 @@ describe('findAlbumById', () => {
 
         await findAlbumById(req, res);
 
-        expect(Album.findOne).toHaveBeenCalledWith({ where: { album_id: req.params.albumId } });
+        expect(db.album.findOne).toHaveBeenCalledWith({ where: { album_id: req.params.albumId } });
         expect(res.status).toHaveBeenCalledWith(500);
         expect(res.send).toHaveBeenCalledWith({ message: 'Error when listing album by id!' });
         expect(console.error).toHaveBeenCalledWith(`Error when listing album by id`, errorMessage);
@@ -184,6 +180,100 @@ describe('findAlbumById', () => {
 
 
 });
+describe('deleteAlbumById', () => {
+
+    beforeEach(() => {
+        req = {
+            params: { albumId: 1 },
+            headers: { authorization: 'valid-token' }
+        };
+        res = {
+            status: jest.fn(() => res),
+            send: jest.fn(),
+        };
+    });
+
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('should delete album when authorized admin and album exists', async () => {
+        isAdmin.mockResolvedValueOnce(true);// Valid user
+        db.album.findByPk = jest.fn().mockResolvedValueOnce({ album_id: 1, name: 'Test Album' });
+        db.album.destroy = jest.fn().mockResolvedValueOnce(1);// Valid album id
+
+        await deleteAlbumById(req, res);
+
+        expect(isAdmin).toHaveBeenCalledWith('valid-token')// Valid token;
+        expect(db.album.findByPk).toHaveBeenCalledWith(req.params.albumId);// findByPk should be called
+        expect(db.album.destroy).toHaveBeenCalledWith({ where: { album_id: req.params.albumId } });// destroy should be called
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.send).toHaveBeenCalledWith({ message: 'Deleted!' })
+
+    });
+    it('should return 403 if user is not authorized', async () => {
+        isAdmin.mockResolvedValueOnce(false); // User is not authorized
+
+        await deleteAlbumById(req, res);
+
+        expect(isAdmin).toHaveBeenCalledWith('valid-token');
+        expect(db.album.findByPk).not.toHaveBeenCalled(); // findByPk shouldn't be called
+        expect(db.album.destroy).not.toHaveBeenCalled(); // destroy shouldn't be called
+        expect(res.status).toHaveBeenCalledWith(403);
+        expect(res.send).toHaveBeenCalledWith({ message: 'Not authorized!' });
+    });
+    it('should return 404 if album is not found', async () => {
+
+        isAdmin.mockResolvedValueOnce(true); // User is authorized
+        db.album.findByPk = jest.fn().mockResolvedValueOnce(null); // Album not found
+
+        await deleteAlbumById(req, res);
+
+        expect(isAdmin).toHaveBeenCalledWith('valid-token');
+        expect(db.album.findByPk).toHaveBeenCalledWith(req.params.albumId);
+        expect(db.album.destroy).not.toHaveBeenCalled(); // destroy shouldn't be called
+        expect(res.status).toHaveBeenCalledWith(404);
+        expect(res.send).toHaveBeenCalledWith({ message: 'Album not found!' });
+    });
+
+    it('should return 403 if token is missing', async () => {
+        const req = {
+            params: { albumId: 1 },
+            headers: {} // Missing authorization header
+        };
+        const res = {
+            status: jest.fn(() => res),
+            send: jest.fn()
+        };
+
+        await deleteAlbumById(req, res);
+
+        expect(isAdmin).not.toHaveBeenCalled(); // isAdmin shouldn't be called
+        expect(db.album.findByPk).not.toHaveBeenCalled(); // findByPk shouldn't be called
+        expect(db.album.destroy).not.toHaveBeenCalled(); // destroy shouldn't be called
+        expect(res.status).toHaveBeenCalledWith(403);
+        expect(res.send).toHaveBeenCalledWith({ message: 'Invalid token' });
+    });
+    it('should return 500 if deletion fails', async () => {
+        isAdmin.mockResolvedValueOnce(true); // User is authorized
+        db.album.findByPk.mockResolvedValueOnce({ id: 1, name: 'Test Album' }); // Album found
+        db.album.destroy.mockResolvedValueOnce(0); // Deletion fails
+
+        await deleteAlbumById(req, res);
+
+        expect(isAdmin).toHaveBeenCalledWith('valid-token');
+        expect(db.album.findByPk).toHaveBeenCalledWith(req.params.albumId);
+        expect(db.album.destroy).toHaveBeenCalledWith({ where: { album_id: req.params.albumId } });
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.send).toHaveBeenCalledWith({ message: 'An error occurred while deleting!' });
+    });
+
+
+
+});
+
+
+
 
 
 
