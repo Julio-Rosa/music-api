@@ -236,8 +236,58 @@ const updatePassword = async (req, res) => {
 
 }
 
+async function findAllUsers2 (){
+    try {
+        
+        const users = await User.findAll({ attributes: ['user_id', 'name', 'email', 'role'] });
+        if (users.length === 0) {
+           
+            console.log(users);
+        }
+       
+    } catch (error) {
+        console.error(`Error when finding all users:`, error);
+        
+    }
+};
 
+// findAllUsers2();
 
+// const name = "Admin"
+// const email = "admin@email.com"
+// const password = "@Jcsr2019"
+// const role = "ADMIN"
+
+// async function insertNewUser2(name,email,password,role) {
+//     try {
+        
+     
+    
+       
+      
+       
+//         const errors = await returnErrors({ name, password, email, role });
+//         if (errors) {
+//            console.log(errors);
+//         }
+    
+//         const passwordHash = await encryptPassword(password);
+//         const newUser = await User.create({
+//             user_id: crypto.randomUUID(),
+//             name,
+//             email,
+//             password: passwordHash,
+//             role
+//         });
+//         const userToReturn = await User.findByPk(newUser.user_id, { attributes: ['user_id', 'name', 'email', 'role'] });
+//         console.log(userToReturn);
+//     } catch (error) {
+//         console.error(`Error occurred:`, error);
+        
+//     }
+// }
+
+// insertNewUser2(name,email,password,role);
 module.exports = {
     insertNewUser,
     getUserById,

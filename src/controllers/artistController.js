@@ -36,7 +36,12 @@ const insertArtistData = async (req, res) => {
 
 const findAllArtists = async (req, res) => {
     try {
-        const artists = await Artist.findAll();
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const offset = (page - 1) * limit;
+        const sortBy = req.query.sortBy || 'name';
+        const sortType = req.query.sortType || 'ASC'
+        const artists = await Artist.findAll({order:[[sortBy,sortType]]},{offset,limit});
         if (artists.length > 0) {
             return res.status(200).send(artists);
         } else {
@@ -124,6 +129,8 @@ const updateArtistById = async (req, res) => {
     }
 
 }
+
+
 
 module.exports = {
     insertArtistData,

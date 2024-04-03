@@ -1,4 +1,4 @@
-
+const cors = require('cors');
 const express = require("express");
 const userRoutes = require('./src/routes/userRoutes');
 const authRoutes = require('./src/routes/authRoutes');
@@ -17,9 +17,13 @@ require('dotenv/config');
 //     console.error("Unable to sync:", err);
 //  })
 
+const corsOptions = {
+    origin: 'http://localhost:4200',
+    optionsSuccessStatus: 200,
+  };
+ 
 
-
-
+app.use(cors(corsOptions));
 app.use(userRoutes, authRoutes,musicRoutes, categoryRoutes,artistRoutes, albumRoutes);
 
 
