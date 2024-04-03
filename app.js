@@ -11,7 +11,7 @@ const db = require("./src/models/model");
 require('dotenv/config');
 
 
-// db.sequelize.sync ({force:true}).then(() => {
+// db.music.sync ({force:true}).then(() => {
 //     console.log("Models Synchronized");
 //  }).catch(err => {
 //     console.error("Unable to sync:", err);

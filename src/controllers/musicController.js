@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const { returnErrors } = require('../utils/errorsUtil');
 const Music = db.music;
 const { isAdmin } = require('../middlewares/authorizationMiddleware');
+const {queryOptions} = require('../utils/paramsUtil');
 
 //------------------------- INSERT NEW MUSIC -----------------------------
 const insertMusicData = async (req, res) => {
@@ -25,6 +26,8 @@ const insertMusicData = async (req, res) => {
         const { release_date, name, album_id, artist_id, category_id } = req.body;
         const options = { release_date };
         const errors = await returnErrors(options);
+        const [day, month, year] = release_date.split('/').map(Number);
+        const date = new Date(year , month - 1, day);
 
         if (errors) {
             return res.status(400).send({ "errors": errors });
@@ -32,7 +35,7 @@ const insertMusicData = async (req, res) => {
 
         const music = await Music.create({
             music_id: crypto.randomUUID(),
-            release_date,
+            release_date: date,
             name,
             album_id,
             artist_id,
@@ -50,7 +53,9 @@ const insertMusicData = async (req, res) => {
 
 const findAllMusics = async (req, res) => {
     try {
-        const musics = await Music.findAll();
+        const options = queryOptions(req);
+        const musics = await Music.findAll(options);
+        console.log(musics);
 
         if (musics.length !== 0) {
             return res.status(200).send(musics);

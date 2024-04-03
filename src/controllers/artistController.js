@@ -1,8 +1,9 @@
-const { Sequelize, DataTypes, Model } = require('sequelize');
+const { Sequelize, DataTypes, Model, Op } = require('sequelize');
 const crypto = require('crypto');
 const db = require("../models/model");
 const Artist = db.artist;
 const { isAdmin } = require('../middlewares/authorizationMiddleware');
+const {queryOptions} = require('../utils/paramsUtil')
 
 const insertArtistData = async (req, res) => {
     try {
@@ -32,16 +33,11 @@ const insertArtistData = async (req, res) => {
     }
 
 };
-
-
 const findAllArtists = async (req, res) => {
     try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const offset = (page - 1) * limit;
-        const sortBy = req.query.sortBy || 'name';
-        const sortType = req.query.sortType || 'ASC'
-        const artists = await Artist.findAll({order:[[sortBy,sortType]]},{offset,limit});
+        
+        const options = queryOptions(req);
+        const artists = await Artist.findAll(options);
         if (artists.length > 0) {
             return res.status(200).send(artists);
         } else {
@@ -53,7 +49,23 @@ const findAllArtists = async (req, res) => {
     }
 
 };
+const findAllArtistsByName = async (req, res) => {
+    try {
+        const word = req.query.word;
+       const options = queryOptions(req);
+        const artists = await Artist.findAll({where: {name: {[Op.like]: `%${word}%`}}});
+        
+        if (artists.length > 0) {
+            return res.status(200).send(artists);
+        } else {
+            return res.status(404).send({ "message": "No artists found!" });
+        }
+    } catch (error) {
+        console.error(`Error listing all artists:`, error);
+        return res.status(500).send({ "message": "Error when listing all artists!" });
+    }
 
+};
 const findArtistById = async (req, res) => {
     try {
         const artist = await Artist.findByPk(req.params.artistId);
@@ -138,6 +150,7 @@ module.exports = {
     findArtistById,
     deleteArtistById,
     updateArtistById,
+    findAllArtistsByName
 
 
 }

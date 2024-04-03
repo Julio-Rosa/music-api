@@ -286,8 +286,7 @@ async function findAllUsers2 (){
         
 //     }
 // }
-
-// insertNewUser2(name,email,password,role);
+//  insertNewUser2(name,email,password,role);
 module.exports = {
     insertNewUser,
     getUserById,

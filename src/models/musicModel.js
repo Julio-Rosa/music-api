@@ -8,7 +8,7 @@ const Music = sequelize.define('music', {
        
     },
     release_date:{
-        type: Sequelize.DataTypes.STRING,
+        type: DataTypes.DATEONLY,
         allowNull: false
     },
     name: {
