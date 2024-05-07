@@ -2,7 +2,7 @@ const { Sequelize, DataTypes, Model } = require('sequelize');
 const crypto = require('crypto');
 const db = require("../models/model");
 const Category = db.category;
-const { isAdmin} = require('../middlewares/authorizationMiddleware');
+const { isAdmin, isAdminOrEditor} = require('../middlewares/authorizationMiddleware');
 
 
 const insertCategoryData = async (req, res) => {
@@ -51,7 +51,7 @@ const deleteCategorieById = async (req, res) => {
             return res.status(403).send({ "message": "Invalid token" });
         }
     
-        const authorized = await isAdmin(tokenHeader);
+        const authorized = await isAdminOrEditor(tokenHeader);
     
         if (authorized === "expired") {
             return res.status(403).send({ "message": "Token expired!" });
@@ -99,7 +99,7 @@ const updateCategoryById = async (req, res) => {
             return res.status(403).send({ "message": "Invalid token" });
         }
     
-        const authorized = await isAdmin(tokenHeader);
+        const authorized = await isAdminOrEditor(tokenHeader);
         if (authorized === "expired") {
             return res.status(403).send({ "message": "Token expired!" });
         } else if (!authorized) {

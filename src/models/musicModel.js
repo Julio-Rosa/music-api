@@ -15,6 +15,10 @@ const Music = sequelize.define('music', {
         type: Sequelize.DataTypes.STRING,
         allowNull: false
     },
+    music_url: {
+        type: Sequelize.DataTypes.STRING,
+        allowNull: true
+    },
    
 });
   

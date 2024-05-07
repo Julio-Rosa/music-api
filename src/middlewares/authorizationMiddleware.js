@@ -26,7 +26,30 @@ async function isAdmin(tokenHeader) {
 
 
 };
-async function isAdminAndSameUser(tokenHeader, userId) {
+async function isAdminOrEditor(tokenHeader) {
+    try {
+        // Verify the token
+        const token = await verifyToken(tokenHeader, process.env.SECRET);
+
+        if (token === 'expired') {
+            return "expired";
+        } else {
+            // Find user by token ID
+            const user = await User.findByPk(token.id);
+
+            // Check if user has admin role
+            return user && user.role === "ADMIN" || user && user.role === "EDITOR";
+        }
+    } catch (error) {
+        // Handle errors
+        console.error(`Error in isAdmin function:`, error.message);
+        return false;
+    }
+
+
+
+};
+async function isSameUser(tokenHeader) {
     try {
         // Verify the token
         const token = await verifyToken(tokenHeader, process.env.SECRET);
@@ -38,7 +61,7 @@ async function isAdminAndSameUser(tokenHeader, userId) {
             const user = await User.findByPk(token.id);
 
             // Check if user is admin or same user
-            return user && (user.role === "ADMIN" || userId === user.user_id);
+            return user;
         }
     } catch (error) {
         // Handle errors
@@ -59,7 +82,8 @@ async function returnRole(tokenHeader) {
 
 module.exports = {
     isAdmin,
-    isAdminAndSameUser,
-    returnRole
+    isSameUser,
+    returnRole,
+    isAdminOrEditor
 
 }

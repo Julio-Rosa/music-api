@@ -3,8 +3,9 @@ const db = require("../models/model");
 const crypto = require('crypto');
 const { returnErrors } = require('../utils/errorsUtil');
 const Music = db.music;
-const { isAdmin } = require('../middlewares/authorizationMiddleware');
+const { isAdmin, isAdminOrEditor } = require('../middlewares/authorizationMiddleware');
 const {queryOptions} = require('../utils/paramsUtil');
+const {stringToDate} = require('../utils/dateUtil');
 
 //------------------------- INSERT NEW MUSIC -----------------------------
 const insertMusicData = async (req, res) => {
@@ -16,27 +17,29 @@ const insertMusicData = async (req, res) => {
             return res.status(403).send({ "message": "Invalid token" });
         }
 
-        const authorized = await isAdmin(tokenHeader);
+        const authorized = await isAdminOrEditor(tokenHeader);
         if (authorized === "expired") {
             return res.status(403).send({ "message": "Token expired!" });
         } else if (!authorized) {
             return res.status(403).send({ "message": "Not authorized!" });
         }
 
-        const { release_date, name, album_id, artist_id, category_id } = req.body;
-        const options = { release_date };
+        const { release_date, name, music_url, album_id, artist_id, category_id } = req.body;
+        const options = { release_date, music_url };
+        
         const errors = await returnErrors(options);
-        const [day, month, year] = release_date.split('/').map(Number);
-        const date = new Date(year , month - 1, day);
+        
+        
 
         if (errors) {
             return res.status(400).send({ "errors": errors });
         }
-
+        const date = stringToDate(options.release_date);
         const music = await Music.create({
             music_id: crypto.randomUUID(),
-            release_date: date,
+            release_date,
             name,
+            music_url,
             album_id,
             artist_id,
             category_id
@@ -55,7 +58,7 @@ const findAllMusics = async (req, res) => {
     try {
         const options = queryOptions(req);
         const musics = await Music.findAll(options);
-        console.log(musics);
+       
 
         if (musics.length !== 0) {
             return res.status(200).send(musics);
@@ -141,7 +144,7 @@ const deleteMusicBydId = async (req, res) => {
             return res.status(403).send({ "message": "Invalid token" });
         }
     
-        const authorized = await isAdmin(tokenHeader);
+        const authorized = await isAdminOrEditor(tokenHeader);
     
         if (authorized === "expired") {
             return res.status(403).send({ "message": "Token expired!" });
@@ -181,7 +184,7 @@ const updateMusicById = async (req, res) => {
             return res.status(403).send({ "message": "Invalid token" });
         }
     
-        const authorized = await isAdmin(tokenHeader);
+        const authorized = await isAdminOrEditor(tokenHeader);
         if (authorized === "expired") {
             return res.status(403).send({ "message": "Token expired!" });
         } else if (!authorized) {
@@ -199,6 +202,7 @@ const updateMusicById = async (req, res) => {
         if (errors) {
             return res.status(400).send({ "errors": errors });
         }
+        
     
         const [updatedCount] = await Music.update({ name, release_date, album_id, category_id, artist_id }, { where: { music_id: req.params.musicId } });
     

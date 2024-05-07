@@ -2,7 +2,7 @@ const { Sequelize, DataTypes, Model, Op } = require('sequelize');
 const crypto = require('crypto');
 const db = require("../models/model");
 const Artist = db.artist;
-const { isAdmin } = require('../middlewares/authorizationMiddleware');
+const { isAdmin, isAdminOrEditor, returnRole } = require('../middlewares/authorizationMiddleware');
 const {queryOptions} = require('../utils/paramsUtil')
 
 const insertArtistData = async (req, res) => {
@@ -12,7 +12,7 @@ const insertArtistData = async (req, res) => {
             return res.status(403).send({ "message": "Invalid token" });
         }
 
-        const authorized = await isAdmin(tokenHeader);
+        const authorized = await isAdminOrEditor(tokenHeader);
         if (authorized === "expired") {
             return res.status(403).send({ "message": "Token expired!" });
         } else if (!authorized) {
@@ -87,7 +87,7 @@ const deleteArtistById = async (req, res) => {
             return res.status(403).send({ "message": "Invalid token" });
         }
 
-        const authorized = await isAdmin(tokenHeader);
+        const authorized = await isAdminOrEditor(tokenHeader);
         if (authorized === "expired") {
             return res.status(403).send({ "message": "Token expired!" });
         } else if (!authorized) {
@@ -116,7 +116,7 @@ const updateArtistById = async (req, res) => {
             return res.status(403).send({ "message": "Invalid token" });
         }
 
-        const authorized = await isAdmin(tokenHeader);
+        const authorized = await isAdminOrEditor(tokenHeader);
         if (authorized === "expired") {
             return res.status(403).send({ "message": "Token expired!" });
         } else if (!authorized) {
@@ -143,7 +143,27 @@ const updateArtistById = async (req, res) => {
 }
 
 
+async function  insertArtistDataTest (name) {
+    try {
+       
+        
+        const artist = await Artist.create({
+            artist_id: crypto.randomUUID(),
+            name,
+            
+        });
 
+        
+    } catch (error) {
+        console.error(`Error when creating a new artist:`, error);
+        
+    }
+
+};
+
+// const  name = 'Foster the people' ;
+
+// insertArtistDataTest(name);
 module.exports = {
     insertArtistData,
     findAllArtists,

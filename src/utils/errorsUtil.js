@@ -40,13 +40,18 @@ async function checkPassword(password) {
 
 
 }
+async function validURL(url){
+    const regex = /^(http:\/\/|https:\/\/)/i;
+    return regex.test(url);
+}
 async function sendErrors(options) {
 
     let errors = [];
     let errorsObject = {};
     if(options && options.role !== undefined){
         
-        if(!(options.role == "ADMIN" || options.role == "USER")){
+        if(!(options.role == "ADMIN" || options.role == "USER" || options.role == "EDITOR")){
+            console.log(options.role);
             errors.push("Invalid Role");
         }
     }
@@ -74,6 +79,14 @@ async function sendErrors(options) {
             errors.push("The repeated password must be the same as the new password");
         }
 
+    }
+
+    if(options && options.music_url !== undefined){
+        const isValidUrl = await validURL(options.music_url);
+
+        if(!isValidUrl){
+            errors.push("Invalid URL!");
+        }
     }
 
     if (options && options.name !== undefined) {
