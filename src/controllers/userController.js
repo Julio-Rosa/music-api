@@ -298,7 +298,7 @@ const resetUserPassword = async (req, res) => {
             return res.status(403).json({ "message": "Invalid token" });
         }
 
-        const authorized = await isAdminAndSameUser(tokenHeader, req.params.userId);
+        const authorized = await isAdmin(tokenHeader, req.params.userId);
         if (authorized === "expired") {
             return res.status(403).json({ "message": "Token expired!" });
         } else if (!authorized) {
